@@ -1,5 +1,6 @@
 -- Honey Display UI for Bee Swarm Simulator
 -- This script creates a UI that displays your current honey amount while farming
+-- Version: 1.1 - Updated: 30/01/2026
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -643,7 +644,7 @@ local function updateDisplay()
         
         -- Update Blueberry count on Black Screen
         local blueberryCount = getItemCountCached("Blueberry")
-        BlackScreenBlueberryLabel.Text = "🫐 Blueberry: " .. blueberryCount
+        BlackScreenBlueberryLabel.Text = "🍇 Blueberry: " .. blueberryCount
         
         -- Update Sunflower Seed count on Black Screen
         local sunflowerCount = getItemCountCached("Sunflower Seed")

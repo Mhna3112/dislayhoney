@@ -420,21 +420,76 @@ end
 -- Function to get item count by name
 local function getItemCount(itemName)
     local count = "0"
+    
+    -- Thử lấy từ InventoryData trong ReplicatedStorage (cách tốt nhất)
     pcall(function()
-        local eggRows = LocalPlayer.PlayerGui.ScreenGui.Menus.Children.Eggs.Content.EggRows
-        for _, eggRow in pairs(eggRows:GetChildren()) do
-            -- Tìm TypeName trong tất cả descendants
-            local typeName = eggRow:FindFirstChild("TypeName", true)
-            if typeName and typeName:IsA("TextLabel") and typeName.Text == itemName then
-                -- Tìm Count trong tất cả descendants
-                local countLabel = eggRow:FindFirstChild("Count", true)
-                if countLabel and countLabel:IsA("TextLabel") then
-                    count = countLabel.Text
-                end
-                break
+        local GameData = LocalPlayer:FindFirstChild("GameData")
+        if GameData then
+            local item = GameData:FindFirstChild(itemName)
+            if item then
+                count = tostring(item.Value)
+                return
             end
         end
     end)
+    
+    if count ~= "0" then return count end
+    
+    -- Thử lấy từ Items folder trong PlayerGui
+    pcall(function()
+        local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
+        if screenGui then
+            local menus = screenGui:FindFirstChild("Menus")
+            if menus then
+                local children = menus:FindFirstChild("Children")
+                if children then
+                    -- Tìm trong tất cả các menu con (Items, Eggs, etc.)
+                    for _, menu in pairs(children:GetChildren()) do
+                        local content = menu:FindFirstChild("Content")
+                        if content then
+                            -- Tìm trong tất cả các row containers
+                            for _, container in pairs(content:GetChildren()) do
+                                if container:IsA("Frame") or container:IsA("ScrollingFrame") then
+                                    for _, row in pairs(container:GetDescendants()) do
+                                        local typeName = row:FindFirstChild("TypeName", true)
+                                        if typeName and typeName:IsA("TextLabel") and typeName.Text == itemName then
+                                            local countLabel = row:FindFirstChild("Count", true)
+                                            if countLabel and countLabel:IsA("TextLabel") then
+                                                count = countLabel.Text
+                                                return
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
+    if count ~= "0" then return count end
+    
+    -- Thử tìm trực tiếp trong tất cả descendants của ScreenGui
+    pcall(function()
+        local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
+        if screenGui then
+            for _, descendant in pairs(screenGui:GetDescendants()) do
+                if descendant:IsA("TextLabel") and descendant.Name == "TypeName" and descendant.Text == itemName then
+                    local parent = descendant.Parent
+                    if parent then
+                        local countLabel = parent:FindFirstChild("Count", true)
+                        if countLabel and countLabel:IsA("TextLabel") then
+                            count = countLabel.Text
+                            return
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
     return count
 end
 

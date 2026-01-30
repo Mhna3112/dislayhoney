@@ -71,11 +71,89 @@ BlackScreenHoneyTotalLabel.Font = Enum.Font.GothamSemibold
 BlackScreenHoneyTotalLabel.ZIndex = 101
 BlackScreenHoneyTotalLabel.Parent = BlackScreen
 
+-- Black Screen Strawberry Display
+local BlackScreenStrawberryLabel = Instance.new("TextLabel")
+BlackScreenStrawberryLabel.Name = "BlackScreenStrawberryLabel"
+BlackScreenStrawberryLabel.Size = UDim2.new(1, 0, 0, 40)
+BlackScreenStrawberryLabel.Position = UDim2.new(0, 0, 0.35, 150)
+BlackScreenStrawberryLabel.BackgroundTransparency = 1
+BlackScreenStrawberryLabel.Text = "🍓 Strawberry: Loading..."
+BlackScreenStrawberryLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+BlackScreenStrawberryLabel.TextSize = 28
+BlackScreenStrawberryLabel.Font = Enum.Font.GothamSemibold
+BlackScreenStrawberryLabel.ZIndex = 101
+BlackScreenStrawberryLabel.Parent = BlackScreen
+
+-- Black Screen Snowflake Display
+local BlackScreenSnowflakeLabel = Instance.new("TextLabel")
+BlackScreenSnowflakeLabel.Name = "BlackScreenSnowflakeLabel"
+BlackScreenSnowflakeLabel.Size = UDim2.new(1, 0, 0, 40)
+BlackScreenSnowflakeLabel.Position = UDim2.new(0, 0, 0.35, 190)
+BlackScreenSnowflakeLabel.BackgroundTransparency = 1
+BlackScreenSnowflakeLabel.Text = "❄️ Snowflake: Loading..."
+BlackScreenSnowflakeLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
+BlackScreenSnowflakeLabel.TextSize = 28
+BlackScreenSnowflakeLabel.Font = Enum.Font.GothamSemibold
+BlackScreenSnowflakeLabel.ZIndex = 101
+BlackScreenSnowflakeLabel.Parent = BlackScreen
+
+-- Black Screen Coconut Display
+local BlackScreenCoconutLabel = Instance.new("TextLabel")
+BlackScreenCoconutLabel.Name = "BlackScreenCoconutLabel"
+BlackScreenCoconutLabel.Size = UDim2.new(1, 0, 0, 40)
+BlackScreenCoconutLabel.Position = UDim2.new(0, 0, 0.35, 230)
+BlackScreenCoconutLabel.BackgroundTransparency = 1
+BlackScreenCoconutLabel.Text = "🥥 Coconut: Loading..."
+BlackScreenCoconutLabel.TextColor3 = Color3.fromRGB(139, 90, 43)
+BlackScreenCoconutLabel.TextSize = 28
+BlackScreenCoconutLabel.Font = Enum.Font.GothamSemibold
+BlackScreenCoconutLabel.ZIndex = 101
+BlackScreenCoconutLabel.Parent = BlackScreen
+
+-- Black Screen Pineapple Display
+local BlackScreenPineappleLabel = Instance.new("TextLabel")
+BlackScreenPineappleLabel.Name = "BlackScreenPineappleLabel"
+BlackScreenPineappleLabel.Size = UDim2.new(1, 0, 0, 40)
+BlackScreenPineappleLabel.Position = UDim2.new(0, 0, 0.35, 270)
+BlackScreenPineappleLabel.BackgroundTransparency = 1
+BlackScreenPineappleLabel.Text = "🍍 Pineapple: Loading..."
+BlackScreenPineappleLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
+BlackScreenPineappleLabel.TextSize = 28
+BlackScreenPineappleLabel.Font = Enum.Font.GothamSemibold
+BlackScreenPineappleLabel.ZIndex = 101
+BlackScreenPineappleLabel.Parent = BlackScreen
+
+-- Black Screen Blueberry Display
+local BlackScreenBlueberryLabel = Instance.new("TextLabel")
+BlackScreenBlueberryLabel.Name = "BlackScreenBlueberryLabel"
+BlackScreenBlueberryLabel.Size = UDim2.new(1, 0, 0, 40)
+BlackScreenBlueberryLabel.Position = UDim2.new(0, 0, 0.35, 310)
+BlackScreenBlueberryLabel.BackgroundTransparency = 1
+BlackScreenBlueberryLabel.Text = "🫐 Blueberry: Loading..."
+BlackScreenBlueberryLabel.TextColor3 = Color3.fromRGB(100, 100, 255)
+BlackScreenBlueberryLabel.TextSize = 28
+BlackScreenBlueberryLabel.Font = Enum.Font.GothamSemibold
+BlackScreenBlueberryLabel.ZIndex = 101
+BlackScreenBlueberryLabel.Parent = BlackScreen
+
+-- Black Screen Sunflower Seed Display
+local BlackScreenSunflowerLabel = Instance.new("TextLabel")
+BlackScreenSunflowerLabel.Name = "BlackScreenSunflowerLabel"
+BlackScreenSunflowerLabel.Size = UDim2.new(1, 0, 0, 40)
+BlackScreenSunflowerLabel.Position = UDim2.new(0, 0, 0.35, 350)
+BlackScreenSunflowerLabel.BackgroundTransparency = 1
+BlackScreenSunflowerLabel.Text = "🌻 Sunflower Seed: Loading..."
+BlackScreenSunflowerLabel.TextColor3 = Color3.fromRGB(255, 220, 100)
+BlackScreenSunflowerLabel.TextSize = 28
+BlackScreenSunflowerLabel.Font = Enum.Font.GothamSemibold
+BlackScreenSunflowerLabel.ZIndex = 101
+BlackScreenSunflowerLabel.Parent = BlackScreen
+
 -- Black Screen Close Button (to turn off black screen)
 local BlackScreenCloseButton = Instance.new("TextButton")
 BlackScreenCloseButton.Name = "BlackScreenCloseButton"
 BlackScreenCloseButton.Size = UDim2.new(0, 200, 0, 50)
-BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 160)
+BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 410)
 BlackScreenCloseButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
 BlackScreenCloseButton.Text = "Black Screen"
 BlackScreenCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -339,6 +417,27 @@ local function calculateHoneyPerSecond(currentHoney)
     return honeyPerSecond
 end
 
+-- Function to get item count by name
+local function getItemCount(itemName)
+    local count = "0"
+    pcall(function()
+        local eggRows = LocalPlayer.PlayerGui.ScreenGui.Menus.Children.Eggs.Content.EggRows
+        for _, eggRow in pairs(eggRows:GetChildren()) do
+            -- Tìm TypeName trong tất cả descendants
+            local typeName = eggRow:FindFirstChild("TypeName", true)
+            if typeName and typeName:IsA("TextLabel") and typeName.Text == itemName then
+                -- Tìm Count trong tất cả descendants
+                local countLabel = eggRow:FindFirstChild("Count", true)
+                if countLabel and countLabel:IsA("TextLabel") then
+                    count = countLabel.Text
+                end
+                break
+            end
+        end
+    end)
+    return count
+end
+
 -- Update loop
 local function updateDisplay()
     local success, err = pcall(function()
@@ -393,6 +492,30 @@ local function updateDisplay()
                 end
             end
         end
+        
+        -- Update Strawberry count on Black Screen
+        local strawberryCount = getItemCount("Strawberry")
+        BlackScreenStrawberryLabel.Text = "🍓 Strawberry: " .. strawberryCount
+        
+        -- Update Snowflake count on Black Screen
+        local snowflakeCount = getItemCount("Snowflake")
+        BlackScreenSnowflakeLabel.Text = "❄️ Snowflake: " .. snowflakeCount
+        
+        -- Update Coconut count on Black Screen
+        local coconutCount = getItemCount("Coconut")
+        BlackScreenCoconutLabel.Text = "🥥 Coconut: " .. coconutCount
+        
+        -- Update Pineapple count on Black Screen
+        local pineappleCount = getItemCount("Pineapple")
+        BlackScreenPineappleLabel.Text = "🍍 Pineapple: " .. pineappleCount
+        
+        -- Update Blueberry count on Black Screen
+        local blueberryCount = getItemCount("Blueberry")
+        BlackScreenBlueberryLabel.Text = "🫐 Blueberry: " .. blueberryCount
+        
+        -- Update Sunflower Seed count on Black Screen
+        local sunflowerCount = getItemCount("Sunflower Seed")
+        BlackScreenSunflowerLabel.Text = "🌻 Sunflower Seed: " .. sunflowerCount
     end)
 end
 

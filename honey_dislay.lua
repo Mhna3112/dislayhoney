@@ -11,6 +11,9 @@ local LocalPlayer = Players.LocalPlayer
 local honeyPerSecond = 0
 local honeyHistory = {}
 
+-- Black Screen variables
+local blackScreenEnabled = false
+
 -- Create the UI
 local HoneyDisplayGui = Instance.new("ScreenGui")
 HoneyDisplayGui.Name = "HoneyDisplayGui"
@@ -18,15 +21,83 @@ HoneyDisplayGui.ResetOnSpawn = false
 HoneyDisplayGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 HoneyDisplayGui.Parent = game.CoreGui
 
+-- Black Screen Frame (full screen overlay)
+local BlackScreen = Instance.new("Frame")
+BlackScreen.Name = "BlackScreen"
+BlackScreen.Size = UDim2.new(2, 0, 2, 0)
+BlackScreen.Position = UDim2.new(-0.5, 0, -0.5, 0)
+BlackScreen.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BlackScreen.BorderSizePixel = 0
+BlackScreen.Visible = false
+BlackScreen.ZIndex = 100
+BlackScreen.Parent = HoneyDisplayGui
+
+-- Black Screen Honey Per Second Display
+local BlackScreenHoneyLabel = Instance.new("TextLabel")
+BlackScreenHoneyLabel.Name = "BlackScreenHoneyLabel"
+BlackScreenHoneyLabel.Size = UDim2.new(1, 0, 0, 60)
+BlackScreenHoneyLabel.Position = UDim2.new(0, 0, 0.35, -30)
+BlackScreenHoneyLabel.BackgroundTransparency = 1
+BlackScreenHoneyLabel.Text = "Honey/s: 0"
+BlackScreenHoneyLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+BlackScreenHoneyLabel.TextSize = 48
+BlackScreenHoneyLabel.Font = Enum.Font.GothamBold
+BlackScreenHoneyLabel.ZIndex = 101
+BlackScreenHoneyLabel.Parent = BlackScreen
+
+-- Black Screen Pollen Display
+local BlackScreenPollenLabel = Instance.new("TextLabel")
+BlackScreenPollenLabel.Name = "BlackScreenPollenLabel"
+BlackScreenPollenLabel.Size = UDim2.new(1, 0, 0, 50)
+BlackScreenPollenLabel.Position = UDim2.new(0, 0, 0.35, 40)
+BlackScreenPollenLabel.BackgroundTransparency = 1
+BlackScreenPollenLabel.Text = "Pollen: 0/0 (0%)"
+BlackScreenPollenLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+BlackScreenPollenLabel.TextSize = 36
+BlackScreenPollenLabel.Font = Enum.Font.GothamSemibold
+BlackScreenPollenLabel.ZIndex = 101
+BlackScreenPollenLabel.Parent = BlackScreen
+
+-- Black Screen Honey Total Display
+local BlackScreenHoneyTotalLabel = Instance.new("TextLabel")
+BlackScreenHoneyTotalLabel.Name = "BlackScreenHoneyTotalLabel"
+BlackScreenHoneyTotalLabel.Size = UDim2.new(1, 0, 0, 40)
+BlackScreenHoneyTotalLabel.Position = UDim2.new(0, 0, 0.35, 100)
+BlackScreenHoneyTotalLabel.BackgroundTransparency = 1
+BlackScreenHoneyTotalLabel.Text = "Honey: 0"
+BlackScreenHoneyTotalLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+BlackScreenHoneyTotalLabel.TextSize = 28
+BlackScreenHoneyTotalLabel.Font = Enum.Font.GothamSemibold
+BlackScreenHoneyTotalLabel.ZIndex = 101
+BlackScreenHoneyTotalLabel.Parent = BlackScreen
+
+-- Black Screen Close Button (to turn off black screen)
+local BlackScreenCloseButton = Instance.new("TextButton")
+BlackScreenCloseButton.Name = "BlackScreenCloseButton"
+BlackScreenCloseButton.Size = UDim2.new(0, 200, 0, 50)
+BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 160)
+BlackScreenCloseButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+BlackScreenCloseButton.Text = "Tắt Black Screen"
+BlackScreenCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+BlackScreenCloseButton.TextSize = 18
+BlackScreenCloseButton.Font = Enum.Font.GothamBold
+BlackScreenCloseButton.ZIndex = 101
+BlackScreenCloseButton.Parent = BlackScreen
+
+local BlackScreenCloseCorner = Instance.new("UICorner")
+BlackScreenCloseCorner.CornerRadius = UDim.new(0, 10)
+BlackScreenCloseCorner.Parent = BlackScreenCloseButton
+
 -- Main Frame (increased height for new display)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 220, 0, 160)
-MainFrame.Position = UDim2.new(0, 10, 0.5, -80)
+MainFrame.Size = UDim2.new(0, 220, 0, 200)
+MainFrame.Position = UDim2.new(0, 10, 0.5, -100)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.ZIndex = 10
 MainFrame.Parent = HoneyDisplayGui
 
 -- Corner rounding
@@ -59,7 +130,7 @@ local TitleText = Instance.new("TextLabel")
 TitleText.Name = "TitleText"
 TitleText.Size = UDim2.new(1, 0, 1, 0)
 TitleText.BackgroundTransparency = 1
-TitleText.Text = "🍯 Honey Display"
+TitleText.Text = "Honey Display"
 TitleText.TextColor3 = Color3.fromRGB(0, 0, 0)
 TitleText.TextSize = 16
 TitleText.Font = Enum.Font.GothamBold
@@ -108,7 +179,7 @@ HoneyPerSecLabel.Name = "HoneyPerSecLabel"
 HoneyPerSecLabel.Size = UDim2.new(1, -10, 1, 0)
 HoneyPerSecLabel.Position = UDim2.new(0, 5, 0, 0)
 HoneyPerSecLabel.BackgroundTransparency = 1
-HoneyPerSecLabel.Text = "⚡ Honey/s: 0"
+HoneyPerSecLabel.Text = "Honey/s: 0"
 HoneyPerSecLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
 HoneyPerSecLabel.TextSize = 16
 HoneyPerSecLabel.Font = Enum.Font.GothamSemibold
@@ -139,6 +210,78 @@ PollenLabel.TextSize = 16
 PollenLabel.Font = Enum.Font.GothamSemibold
 PollenLabel.TextXAlignment = Enum.TextXAlignment.Left
 PollenLabel.Parent = PollenFrame
+
+-- Black Screen Toggle Button
+local BlackScreenFrame = Instance.new("Frame")
+BlackScreenFrame.Name = "BlackScreenFrame"
+BlackScreenFrame.Size = UDim2.new(1, -20, 0, 35)
+BlackScreenFrame.Position = UDim2.new(0, 10, 0, 160)
+BlackScreenFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+BlackScreenFrame.BorderSizePixel = 0
+BlackScreenFrame.ZIndex = 10
+BlackScreenFrame.Parent = MainFrame
+
+local BlackScreenFrameCorner = Instance.new("UICorner")
+BlackScreenFrameCorner.CornerRadius = UDim.new(0, 8)
+BlackScreenFrameCorner.Parent = BlackScreenFrame
+
+local BlackScreenToggleButton = Instance.new("TextButton")
+BlackScreenToggleButton.Name = "BlackScreenToggleButton"
+BlackScreenToggleButton.Size = UDim2.new(1, 0, 1, 0)
+BlackScreenToggleButton.BackgroundTransparency = 1
+BlackScreenToggleButton.Text = "Black Screen: OFF"
+BlackScreenToggleButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+BlackScreenToggleButton.TextSize = 14
+BlackScreenToggleButton.Font = Enum.Font.GothamSemibold
+BlackScreenToggleButton.ZIndex = 10
+BlackScreenToggleButton.Parent = BlackScreenFrame
+
+BlackScreenToggleButton.MouseButton1Click:Connect(function()
+    blackScreenEnabled = not blackScreenEnabled
+    BlackScreen.Visible = blackScreenEnabled
+    if blackScreenEnabled then
+        BlackScreenToggleButton.Text = "Black Screen: ON"
+        BlackScreenToggleButton.TextColor3 = Color3.fromRGB(100, 255, 100)
+        -- Hide other UI elements, only show black screen toggle
+        HoneyFrame.Visible = false
+        HoneyPerSecFrame.Visible = false
+        PollenFrame.Visible = false
+        TitleBar.Visible = false
+        -- Resize main frame to only show toggle button
+        MainFrame.Size = UDim2.new(0, 220, 0, 55)
+        BlackScreenFrame.Position = UDim2.new(0, 10, 0, 10)
+    else
+        BlackScreenToggleButton.Text = "Black Screen: OFF"
+        BlackScreenToggleButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+        -- Show all UI elements again
+        HoneyFrame.Visible = true
+        HoneyPerSecFrame.Visible = true
+        PollenFrame.Visible = true
+        TitleBar.Visible = true
+        -- Restore main frame size
+        MainFrame.Size = UDim2.new(0, 220, 0, 200)
+        BlackScreenFrame.Position = UDim2.new(0, 10, 0, 160)
+    end
+end)
+
+-- Function to turn off black screen (used by both buttons)
+local function turnOffBlackScreen()
+    blackScreenEnabled = false
+    BlackScreen.Visible = false
+    BlackScreenToggleButton.Text = "Black Screen: OFF"
+    BlackScreenToggleButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+    -- Show all UI elements again
+    HoneyFrame.Visible = true
+    HoneyPerSecFrame.Visible = true
+    PollenFrame.Visible = true
+    TitleBar.Visible = true
+    -- Restore main frame size
+    MainFrame.Size = UDim2.new(0, 220, 0, 200)
+    BlackScreenFrame.Position = UDim2.new(0, 10, 0, 160)
+end
+
+-- Connect black screen close button
+BlackScreenCloseButton.MouseButton1Click:Connect(turnOffBlackScreen)
 
 -- Function to format numbers
 local function formatNumber(num)
@@ -193,19 +336,26 @@ local function updateDisplay()
             -- Get Honey
             local honey = coreStats:FindFirstChild("Honey")
             if honey then
-                HoneyLabel.Text = "🍯 Honey: " .. formatNumber(honey.Value)
+                HoneyLabel.Text = "Honey: " .. formatNumber(honey.Value)
                 
                 -- Calculate and display honey per second
                 local hps = calculateHoneyPerSecond(honey.Value)
-                HoneyPerSecLabel.Text = "⚡ Honey/s: " .. formatNumber(hps)
+                HoneyPerSecLabel.Text = "Honey/s: " .. formatNumber(hps)
+                
+                -- Update Black Screen displays
+                BlackScreenHoneyLabel.Text = "Honey/s: " .. formatNumber(hps)
+                BlackScreenHoneyTotalLabel.Text = "Honey: " .. formatNumber(honey.Value)
                 
                 -- Color based on rate
                 if hps >= 1e6 then
                     HoneyPerSecLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- Gold for high rates
+                    BlackScreenHoneyLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
                 elseif hps >= 1e3 then
                     HoneyPerSecLabel.TextColor3 = Color3.fromRGB(100, 255, 100) -- Green for good rates
+                    BlackScreenHoneyLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
                 else
                     HoneyPerSecLabel.TextColor3 = Color3.fromRGB(200, 200, 200) -- Gray for low rates
+                    BlackScreenHoneyLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
                 end
             end
             
@@ -214,15 +364,20 @@ local function updateDisplay()
             local capacity = coreStats:FindFirstChild("Capacity")
             if pollen and capacity then
                 local percentage = math.floor((pollen.Value / capacity.Value) * 100)
-                PollenLabel.Text = "🌸 Pollen: " .. formatNumber(pollen.Value) .. "/" .. formatNumber(capacity.Value) .. " (" .. percentage .. "%)"
+                local pollenText = "Pollen: " .. formatNumber(pollen.Value) .. "/" .. formatNumber(capacity.Value) .. " (" .. percentage .. "%)"
+                PollenLabel.Text = pollenText
+                BlackScreenPollenLabel.Text = pollenText
                 
                 -- Change color based on capacity
                 if percentage >= 90 then
                     PollenLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- Red when almost full
+                    BlackScreenPollenLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
                 elseif percentage >= 70 then
                     PollenLabel.TextColor3 = Color3.fromRGB(255, 200, 100) -- Orange
+                    BlackScreenPollenLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
                 else
                     PollenLabel.TextColor3 = Color3.fromRGB(255, 255, 100) -- Yellow
+                    BlackScreenPollenLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
                 end
             end
         end
@@ -278,13 +433,15 @@ MinimizeButton.MouseButton1Click:Connect(function()
         HoneyFrame.Visible = false
         HoneyPerSecFrame.Visible = false
         PollenFrame.Visible = false
+        BlackScreenFrame.Visible = false
         MinimizeButton.Text = "+"
     else
-        TweenService:Create(MainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 220, 0, 160)}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 220, 0, 200)}):Play()
         task.wait(0.3)
         HoneyFrame.Visible = true
         HoneyPerSecFrame.Visible = true
         PollenFrame.Visible = true
+        BlackScreenFrame.Visible = true
         MinimizeButton.Text = "-"
     end
 end)

@@ -149,11 +149,27 @@ BlackScreenSunflowerLabel.Font = Enum.Font.GothamSemibold
 BlackScreenSunflowerLabel.ZIndex = 101
 BlackScreenSunflowerLabel.Parent = BlackScreen
 
+-- Thông báo hướng dẫn mở menu
+local BlackScreenNoticeLabel = Instance.new("TextLabel")
+BlackScreenNoticeLabel.Name = "BlackScreenNoticeLabel"
+BlackScreenNoticeLabel.Size = UDim2.new(1, 0, 0, 30)
+BlackScreenNoticeLabel.Position = UDim2.new(0, 0, 0.35, 390)
+BlackScreenNoticeLabel.BackgroundTransparency = 1
+BlackScreenNoticeLabel.Text = "⚠️ Mở menu Eggs/Items 1 lần để load dữ liệu ⚠️"
+BlackScreenNoticeLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+BlackScreenNoticeLabel.TextSize = 16
+BlackScreenNoticeLabel.Font = Enum.Font.GothamSemibold
+BlackScreenNoticeLabel.ZIndex = 101
+BlackScreenNoticeLabel.Parent = BlackScreen
+
+-- Biến để theo dõi đã load data chưa
+local itemsDataLoaded = false
+
 -- Black Screen Close Button (to turn off black screen)
 local BlackScreenCloseButton = Instance.new("TextButton")
 BlackScreenCloseButton.Name = "BlackScreenCloseButton"
 BlackScreenCloseButton.Size = UDim2.new(0, 200, 0, 50)
-BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 410)
+BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 430)
 BlackScreenCloseButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
 BlackScreenCloseButton.Text = "Black Screen"
 BlackScreenCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -417,72 +433,60 @@ local function calculateHoneyPerSecond(currentHoney)
     return honeyPerSecond
 end
 
--- Function to get item count by name
+-- Function to get item count by name (Bee Swarm Simulator specific)
 local function getItemCount(itemName)
     local count = "0"
     
-    -- Thử lấy từ InventoryData trong ReplicatedStorage (cách tốt nhất)
-    pcall(function()
-        local GameData = LocalPlayer:FindFirstChild("GameData")
-        if GameData then
-            local item = GameData:FindFirstChild(itemName)
-            if item then
-                count = tostring(item.Value)
-                return
-            end
-        end
-    end)
-    
-    if count ~= "0" then return count end
-    
-    -- Thử lấy từ Items folder trong PlayerGui
+    -- Tìm trong EggRows - cấu trúc chính xác của Bee Swarm Simulator
     pcall(function()
         local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
-        if screenGui then
-            local menus = screenGui:FindFirstChild("Menus")
-            if menus then
-                local children = menus:FindFirstChild("Children")
-                if children then
-                    -- Tìm trong tất cả các menu con (Items, Eggs, etc.)
-                    for _, menu in pairs(children:GetChildren()) do
-                        local content = menu:FindFirstChild("Content")
-                        if content then
-                            -- Tìm trong tất cả các row containers
-                            for _, container in pairs(content:GetChildren()) do
-                                if container:IsA("Frame") or container:IsA("ScrollingFrame") then
-                                    for _, row in pairs(container:GetDescendants()) do
-                                        local typeName = row:FindFirstChild("TypeName", true)
-                                        if typeName and typeName:IsA("TextLabel") and typeName.Text == itemName then
-                                            local countLabel = row:FindFirstChild("Count", true)
-                                            if countLabel and countLabel:IsA("TextLabel") then
-                                                count = countLabel.Text
-                                                return
-                                            end
-                                        end
-                                    end
-                                end
+        if not screenGui then print("No ScreenGui") return end
+        
+        local menus = screenGui:FindFirstChild("Menus")
+        if not menus then print("No Menus") return end
+        
+        local children = menus:FindFirstChild("Children")
+        if not children then print("No Children") return end
+        
+        local eggs = children:FindFirstChild("Eggs")
+        if not eggs then print("No Eggs") return end
+        
+        local content = eggs:FindFirstChild("Content")
+        if not content then print("No Content") return end
+        
+        local eggRows = content:FindFirstChild("EggRows")
+        if not eggRows then print("No EggRows") return end
+        
+        -- Duyệt qua tất cả EggRow
+        for _, eggRow in pairs(eggRows:GetChildren()) do
+            -- Tìm TypeName trong tất cả descendants
+            for _, desc in pairs(eggRow:GetDescendants()) do
+                if desc:IsA("TextLabel") and desc.Name == "TypeName" and desc.Text == itemName then
+                    -- Tìm Count - có thể ở cùng level hoặc khác level
+                    -- Thử tìm trong parent của TypeName
+                    local parent = desc.Parent
+                    while parent and parent ~= eggRow.Parent do
+                        local countLabel = parent:FindFirstChild("Count")
+                        if countLabel and countLabel:IsA("TextLabel") then
+                            local text = countLabel.Text
+                            local numMatch = text:match("x?([%d,]+)")
+                            if numMatch then
+                                count = numMatch:gsub(",", "")
+                                return
                             end
                         end
+                        parent = parent.Parent
                     end
-                end
-            end
-        end
-    end)
-    
-    if count ~= "0" then return count end
-    
-    -- Thử tìm trực tiếp trong tất cả descendants của ScreenGui
-    pcall(function()
-        local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
-        if screenGui then
-            for _, descendant in pairs(screenGui:GetDescendants()) do
-                if descendant:IsA("TextLabel") and descendant.Name == "TypeName" and descendant.Text == itemName then
-                    local parent = descendant.Parent
-                    if parent then
-                        local countLabel = parent:FindFirstChild("Count", true)
-                        if countLabel and countLabel:IsA("TextLabel") then
-                            count = countLabel.Text
-                            return
+                    
+                    -- Thử tìm trong toàn bộ eggRow
+                    for _, child in pairs(eggRow:GetDescendants()) do
+                        if child:IsA("TextLabel") and child.Name == "Count" then
+                            local text = child.Text
+                            local numMatch = text:match("x?([%d,]+)")
+                            if numMatch then
+                                count = numMatch:gsub(",", "")
+                                return
+                            end
                         end
                     end
                 end
@@ -492,6 +496,76 @@ local function getItemCount(itemName)
     
     return count
 end
+
+-- Biến để lưu cache items (sau khi mở menu 1 lần)
+local itemsCache = {}
+local itemsCacheLoaded = false
+
+-- Function để load tất cả items vào cache
+local function loadItemsCache()
+    pcall(function()
+        local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
+        if not screenGui then return end
+        
+        local menus = screenGui:FindFirstChild("Menus")
+        if not menus then return end
+        
+        local children = menus:FindFirstChild("Children")
+        if not children then return end
+        
+        local eggs = children:FindFirstChild("Eggs")
+        if not eggs then return end
+        
+        local content = eggs:FindFirstChild("Content")
+        if not content then return end
+        
+        local eggRows = content:FindFirstChild("EggRows")
+        if not eggRows then return end
+        
+        for _, eggRow in pairs(eggRows:GetChildren()) do
+            -- Tìm trong descendants
+            local typeName = nil
+            local countLabel = nil
+            
+            for _, desc in pairs(eggRow:GetDescendants()) do
+                if desc:IsA("TextLabel") then
+                    if desc.Name == "TypeName" then
+                        typeName = desc
+                    elseif desc.Name == "Count" then
+                        countLabel = desc
+                    end
+                end
+            end
+            
+            if typeName and countLabel then
+                local name = typeName.Text
+                local text = countLabel.Text
+                local numMatch = text:match("x?([%d,]+)")
+                if numMatch and name and name ~= "" then
+                    itemsCache[name] = numMatch:gsub(",", "")
+                    itemsCacheLoaded = true
+                end
+            end
+        end
+    end)
+end
+
+-- Function để lấy item từ cache hoặc trực tiếp
+local function getItemCountCached(itemName)
+    -- Load cache mỗi lần để cập nhật số mới nhất
+    loadItemsCache()
+    
+    -- Trả về từ cache nếu có
+    if itemsCache[itemName] then
+        return itemsCache[itemName]
+    end
+    
+    -- Fallback: lấy trực tiếp
+    return getItemCount(itemName)
+end
+
+-- Debug đã hoàn thành, tắt debug
+local debugRan = true
 
 -- Update loop
 local function updateDisplay()
@@ -548,29 +622,41 @@ local function updateDisplay()
             end
         end
         
+        -- Load cache từ menu Eggs nếu chưa có
+        loadItemsCache()
+        
         -- Update Strawberry count on Black Screen
-        local strawberryCount = getItemCount("Strawberry")
+        local strawberryCount = getItemCountCached("Strawberry")
         BlackScreenStrawberryLabel.Text = "🍓 Strawberry: " .. strawberryCount
         
         -- Update Snowflake count on Black Screen
-        local snowflakeCount = getItemCount("Snowflake")
+        local snowflakeCount = getItemCountCached("Snowflake")
         BlackScreenSnowflakeLabel.Text = "❄️ Snowflake: " .. snowflakeCount
         
         -- Update Coconut count on Black Screen
-        local coconutCount = getItemCount("Coconut")
+        local coconutCount = getItemCountCached("Coconut")
         BlackScreenCoconutLabel.Text = "🥥 Coconut: " .. coconutCount
         
         -- Update Pineapple count on Black Screen
-        local pineappleCount = getItemCount("Pineapple")
+        local pineappleCount = getItemCountCached("Pineapple")
         BlackScreenPineappleLabel.Text = "🍍 Pineapple: " .. pineappleCount
         
         -- Update Blueberry count on Black Screen
-        local blueberryCount = getItemCount("Blueberry")
+        local blueberryCount = getItemCountCached("Blueberry")
         BlackScreenBlueberryLabel.Text = "🫐 Blueberry: " .. blueberryCount
         
         -- Update Sunflower Seed count on Black Screen
-        local sunflowerCount = getItemCount("Sunflower Seed")
+        local sunflowerCount = getItemCountCached("Sunflower Seed")
         BlackScreenSunflowerLabel.Text = "🌻 Sunflower Seed: " .. sunflowerCount
+        
+        -- Ẩn thông báo nếu đã load được dữ liệu (bất kỳ item nào khác "0")
+        if not itemsDataLoaded then
+            if strawberryCount ~= "0" or snowflakeCount ~= "0" or coconutCount ~= "0" or 
+               pineappleCount ~= "0" or blueberryCount ~= "0" or sunflowerCount ~= "0" then
+                itemsDataLoaded = true
+                BlackScreenNoticeLabel.Visible = false
+            end
+        end
     end)
 end
 

@@ -283,6 +283,18 @@ end
 -- Connect black screen close button
 BlackScreenCloseButton.MouseButton1Click:Connect(turnOffBlackScreen)
 
+-- Auto enable black screen on execute
+blackScreenEnabled = true
+BlackScreen.Visible = true
+BlackScreenToggleButton.Text = "Black Screen: ON"
+BlackScreenToggleButton.TextColor3 = Color3.fromRGB(100, 255, 100)
+HoneyFrame.Visible = false
+HoneyPerSecFrame.Visible = false
+PollenFrame.Visible = false
+TitleBar.Visible = false
+MainFrame.Size = UDim2.new(0, 220, 0, 55)
+BlackScreenFrame.Position = UDim2.new(0, 10, 0, 10)
+
 -- Function to format numbers
 local function formatNumber(num)
     if num >= 1e15 then

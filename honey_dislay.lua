@@ -36,12 +36,12 @@ BlackScreen.Parent = HoneyDisplayGui
 -- Black Screen Honey Per Second Display
 local BlackScreenHoneyLabel = Instance.new("TextLabel")
 BlackScreenHoneyLabel.Name = "BlackScreenHoneyLabel"
-BlackScreenHoneyLabel.Size = UDim2.new(1, 0, 0, 60)
-BlackScreenHoneyLabel.Position = UDim2.new(0, 0, 0.35, -30)
+BlackScreenHoneyLabel.Size = UDim2.new(0.5, 0, 0, 50)
+BlackScreenHoneyLabel.Position = UDim2.new(0.25, 0, 0.25, 10)
 BlackScreenHoneyLabel.BackgroundTransparency = 1
 BlackScreenHoneyLabel.Text = "Honey/s: 0"
 BlackScreenHoneyLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-BlackScreenHoneyLabel.TextSize = 48
+BlackScreenHoneyLabel.TextSize = 40
 BlackScreenHoneyLabel.Font = Enum.Font.GothamBold
 BlackScreenHoneyLabel.ZIndex = 101
 BlackScreenHoneyLabel.Parent = BlackScreen
@@ -49,12 +49,12 @@ BlackScreenHoneyLabel.Parent = BlackScreen
 -- Black Screen Pollen Display
 local BlackScreenPollenLabel = Instance.new("TextLabel")
 BlackScreenPollenLabel.Name = "BlackScreenPollenLabel"
-BlackScreenPollenLabel.Size = UDim2.new(1, 0, 0, 50)
-BlackScreenPollenLabel.Position = UDim2.new(0, 0, 0.35, 40)
+BlackScreenPollenLabel.Size = UDim2.new(0.5, 0, 0, 35)
+BlackScreenPollenLabel.Position = UDim2.new(0.25, 0, 0.25, 55)
 BlackScreenPollenLabel.BackgroundTransparency = 1
 BlackScreenPollenLabel.Text = "Pollen: 0/0 (0%)"
 BlackScreenPollenLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
-BlackScreenPollenLabel.TextSize = 36
+BlackScreenPollenLabel.TextSize = 28
 BlackScreenPollenLabel.Font = Enum.Font.GothamSemibold
 BlackScreenPollenLabel.ZIndex = 101
 BlackScreenPollenLabel.Parent = BlackScreen
@@ -62,12 +62,12 @@ BlackScreenPollenLabel.Parent = BlackScreen
 -- Black Screen Honey Total Display
 local BlackScreenHoneyTotalLabel = Instance.new("TextLabel")
 BlackScreenHoneyTotalLabel.Name = "BlackScreenHoneyTotalLabel"
-BlackScreenHoneyTotalLabel.Size = UDim2.new(1, 0, 0, 40)
-BlackScreenHoneyTotalLabel.Position = UDim2.new(0, 0, 0.35, 100)
+BlackScreenHoneyTotalLabel.Size = UDim2.new(0.5, 0, 0, 30)
+BlackScreenHoneyTotalLabel.Position = UDim2.new(0.25, 0, 0.25, 88)
 BlackScreenHoneyTotalLabel.BackgroundTransparency = 1
 BlackScreenHoneyTotalLabel.Text = "Honey: 0"
 BlackScreenHoneyTotalLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
-BlackScreenHoneyTotalLabel.TextSize = 28
+BlackScreenHoneyTotalLabel.TextSize = 22
 BlackScreenHoneyTotalLabel.Font = Enum.Font.GothamSemibold
 BlackScreenHoneyTotalLabel.ZIndex = 101
 BlackScreenHoneyTotalLabel.Parent = BlackScreen
@@ -75,49 +75,37 @@ BlackScreenHoneyTotalLabel.Parent = BlackScreen
 -- Container cho các items (sử dụng ScrollingFrame để có thể scroll nếu nhiều items)
 local ItemsContainer = Instance.new("ScrollingFrame")
 ItemsContainer.Name = "ItemsContainer"
-ItemsContainer.Size = UDim2.new(1, 0, 0, 350)
-ItemsContainer.Position = UDim2.new(0, 0, 0.35, 150)
+ItemsContainer.Size = UDim2.new(0.5, 0, 0.4, 0)
+ItemsContainer.Position = UDim2.new(0.25, 0, 0.25, 130)
 ItemsContainer.BackgroundTransparency = 1
 ItemsContainer.BorderSizePixel = 0
 ItemsContainer.ScrollBarThickness = 6
 ItemsContainer.ScrollBarImageColor3 = Color3.fromRGB(255, 200, 0)
 ItemsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+ItemsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ItemsContainer.ZIndex = 101
 ItemsContainer.Parent = BlackScreen
 
 -- UIGridLayout để tự động sắp xếp items theo hàng ngang
 local ItemsLayout = Instance.new("UIGridLayout")
 ItemsLayout.SortOrder = Enum.SortOrder.Name
-ItemsLayout.CellSize = UDim2.new(0, 160, 0, 30)
-ItemsLayout.CellPadding = UDim2.new(0, 5, 0, 5)
+ItemsLayout.CellSize = UDim2.new(0, 140, 0, 28)
+ItemsLayout.CellPadding = UDim2.new(0, 4, 0, 4)
 ItemsLayout.FillDirection = Enum.FillDirection.Horizontal
 ItemsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 ItemsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-ItemsLayout.FillDirectionMaxCells = 8
+ItemsLayout.FillDirectionMaxCells = 0
 ItemsLayout.Parent = ItemsContainer
 
 -- Padding cho container
 local ItemsPadding = Instance.new("UIPadding")
-ItemsPadding.PaddingLeft = UDim.new(0, 10)
-ItemsPadding.PaddingRight = UDim.new(0, 10)
+ItemsPadding.PaddingLeft = UDim.new(0, 5)
+ItemsPadding.PaddingRight = UDim.new(0, 5)
 ItemsPadding.PaddingTop = UDim.new(0, 5)
 ItemsPadding.Parent = ItemsContainer
 
 -- Bảng lưu các item labels đã tạo
 local itemLabels = {}
-
--- Thông báo hướng dẫn mở menu
-local BlackScreenNoticeLabel = Instance.new("TextLabel")
-BlackScreenNoticeLabel.Name = "BlackScreenNoticeLabel"
-BlackScreenNoticeLabel.Size = UDim2.new(1, 0, 0, 30)
-BlackScreenNoticeLabel.Position = UDim2.new(0, 0, 0.35, 460)
-BlackScreenNoticeLabel.BackgroundTransparency = 1
-BlackScreenNoticeLabel.Text = "⚠️ Mở menu Eggs/Items 1 lần để load dữ liệu ⚠️"
-BlackScreenNoticeLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
-BlackScreenNoticeLabel.TextSize = 16
-BlackScreenNoticeLabel.Font = Enum.Font.GothamSemibold
-BlackScreenNoticeLabel.ZIndex = 101
-BlackScreenNoticeLabel.Parent = BlackScreen
 
 -- Biến để theo dõi đã load data chưa
 local itemsDataLoaded = false
@@ -125,12 +113,12 @@ local itemsDataLoaded = false
 -- Black Screen Close Button (to turn off black screen)
 local BlackScreenCloseButton = Instance.new("TextButton")
 BlackScreenCloseButton.Name = "BlackScreenCloseButton"
-BlackScreenCloseButton.Size = UDim2.new(0, 200, 0, 50)
-BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 500)
+BlackScreenCloseButton.Size = UDim2.new(0, 180, 0, 40)
+BlackScreenCloseButton.Position = UDim2.new(0.5, -90, 0.75, -50)
 BlackScreenCloseButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-BlackScreenCloseButton.Text = "Black Screen"
+BlackScreenCloseButton.Text = "Tắt Black Screen"
 BlackScreenCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-BlackScreenCloseButton.TextSize = 18
+BlackScreenCloseButton.TextSize = 16
 BlackScreenCloseButton.Font = Enum.Font.GothamBold
 BlackScreenCloseButton.ZIndex = 101
 BlackScreenCloseButton.Parent = BlackScreen
@@ -475,15 +463,6 @@ local function createOrUpdateItemLabel(itemName, count)
         if itemLabels[itemName] then
             itemLabels[itemName]:Destroy()
             itemLabels[itemName] = nil
-            
-            -- Cập nhật CanvasSize
-            local totalItems = 0
-            for _ in pairs(itemLabels) do
-                totalItems = totalItems + 1
-            end
-            local itemsPerRow = 7
-            local rows = math.ceil(totalItems / itemsPerRow)
-            ItemsContainer.CanvasSize = UDim2.new(0, 0, 0, rows * 32 + 10)
         end
         return
     end
@@ -492,7 +471,7 @@ local function createOrUpdateItemLabel(itemName, count)
         -- Tạo frame container cho item
         local itemFrame = Instance.new("Frame")
         itemFrame.Name = itemName
-        itemFrame.Size = UDim2.new(0, 160, 0, 30)
+        itemFrame.Size = UDim2.new(0, 140, 0, 28)
         itemFrame.BackgroundTransparency = 0.7
         itemFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         itemFrame.ZIndex = 101
@@ -500,14 +479,14 @@ local function createOrUpdateItemLabel(itemName, count)
         
         -- Bo góc cho frame
         local frameCorner = Instance.new("UICorner")
-        frameCorner.CornerRadius = UDim.new(0, 6)
+        frameCorner.CornerRadius = UDim.new(0, 5)
         frameCorner.Parent = itemFrame
         
         -- Tạo icon nếu có
         local icon = Instance.new("ImageLabel")
         icon.Name = "Icon"
-        icon.Size = UDim2.new(0, 26, 0, 26)
-        icon.Position = UDim2.new(0, 2, 0.5, -13)
+        icon.Size = UDim2.new(0, 24, 0, 24)
+        icon.Position = UDim2.new(0, 2, 0.5, -12)
         icon.BackgroundTransparency = 1
         icon.ZIndex = 102
         icon.Parent = itemFrame
@@ -520,12 +499,12 @@ local function createOrUpdateItemLabel(itemName, count)
         -- Tạo label cho text
         local label = Instance.new("TextLabel")
         label.Name = "Label"
-        label.Size = UDim2.new(1, -32, 1, 0)
-        label.Position = UDim2.new(0, 30, 0, 0)
+        label.Size = UDim2.new(1, -28, 1, 0)
+        label.Position = UDim2.new(0, 28, 0, 0)
         label.BackgroundTransparency = 1
         label.Text = itemName .. ": " .. count
         label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        label.TextSize = 11
+        label.TextSize = 10
         label.Font = Enum.Font.GothamSemibold
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.TextScaled = false
@@ -534,15 +513,6 @@ local function createOrUpdateItemLabel(itemName, count)
         label.Parent = itemFrame
         
         itemLabels[itemName] = itemFrame
-        
-        -- Cập nhật CanvasSize dựa trên số hàng
-        local totalItems = 0
-        for _ in pairs(itemLabels) do
-            totalItems = totalItems + 1
-        end
-        local itemsPerRow = 8 -- 8 items mỗi hàng với width 160px
-        local rows = math.ceil(totalItems / itemsPerRow)
-        ItemsContainer.CanvasSize = UDim2.new(0, 0, 0, rows * 35 + 10)
     else
         -- Cập nhật label hiện có
         local labelChild = itemLabels[itemName]:FindFirstChild("Label")
@@ -631,10 +601,9 @@ local function updateDisplay()
             createOrUpdateItemLabel(itemName, count)
         end
         
-        -- Ẩn thông báo nếu đã load được dữ liệu
+        -- Đánh dấu đã load dữ liệu
         if not itemsDataLoaded and itemsCacheLoaded then
             itemsDataLoaded = true
-            BlackScreenNoticeLabel.Visible = false
         end
     end)
 end

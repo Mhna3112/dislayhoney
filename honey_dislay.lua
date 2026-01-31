@@ -72,89 +72,45 @@ BlackScreenHoneyTotalLabel.Font = Enum.Font.GothamSemibold
 BlackScreenHoneyTotalLabel.ZIndex = 101
 BlackScreenHoneyTotalLabel.Parent = BlackScreen
 
--- Black Screen Strawberry Display
-local BlackScreenStrawberryLabel = Instance.new("TextLabel")
-BlackScreenStrawberryLabel.Name = "BlackScreenStrawberryLabel"
-BlackScreenStrawberryLabel.Size = UDim2.new(1, 0, 0, 40)
-BlackScreenStrawberryLabel.Position = UDim2.new(0, 0, 0.35, 150)
-BlackScreenStrawberryLabel.BackgroundTransparency = 1
-BlackScreenStrawberryLabel.Text = "🍓 Strawberry: Loading..."
-BlackScreenStrawberryLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-BlackScreenStrawberryLabel.TextSize = 28
-BlackScreenStrawberryLabel.Font = Enum.Font.GothamSemibold
-BlackScreenStrawberryLabel.ZIndex = 101
-BlackScreenStrawberryLabel.Parent = BlackScreen
+-- Container cho các items (sử dụng ScrollingFrame để có thể scroll nếu nhiều items)
+local ItemsContainer = Instance.new("ScrollingFrame")
+ItemsContainer.Name = "ItemsContainer"
+ItemsContainer.Size = UDim2.new(1, 0, 0, 350)
+ItemsContainer.Position = UDim2.new(0, 0, 0.35, 150)
+ItemsContainer.BackgroundTransparency = 1
+ItemsContainer.BorderSizePixel = 0
+ItemsContainer.ScrollBarThickness = 6
+ItemsContainer.ScrollBarImageColor3 = Color3.fromRGB(255, 200, 0)
+ItemsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+ItemsContainer.ZIndex = 101
+ItemsContainer.Parent = BlackScreen
 
--- Black Screen Snowflake Display
-local BlackScreenSnowflakeLabel = Instance.new("TextLabel")
-BlackScreenSnowflakeLabel.Name = "BlackScreenSnowflakeLabel"
-BlackScreenSnowflakeLabel.Size = UDim2.new(1, 0, 0, 40)
-BlackScreenSnowflakeLabel.Position = UDim2.new(0, 0, 0.35, 190)
-BlackScreenSnowflakeLabel.BackgroundTransparency = 1
-BlackScreenSnowflakeLabel.Text = "❄️ Snowflake: Loading..."
-BlackScreenSnowflakeLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
-BlackScreenSnowflakeLabel.TextSize = 28
-BlackScreenSnowflakeLabel.Font = Enum.Font.GothamSemibold
-BlackScreenSnowflakeLabel.ZIndex = 101
-BlackScreenSnowflakeLabel.Parent = BlackScreen
+-- UIGridLayout để tự động sắp xếp items theo hàng ngang
+local ItemsLayout = Instance.new("UIGridLayout")
+ItemsLayout.SortOrder = Enum.SortOrder.Name
+ItemsLayout.CellSize = UDim2.new(0, 160, 0, 30)
+ItemsLayout.CellPadding = UDim2.new(0, 5, 0, 5)
+ItemsLayout.FillDirection = Enum.FillDirection.Horizontal
+ItemsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+ItemsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+ItemsLayout.FillDirectionMaxCells = 8
+ItemsLayout.Parent = ItemsContainer
 
--- Black Screen Coconut Display
-local BlackScreenCoconutLabel = Instance.new("TextLabel")
-BlackScreenCoconutLabel.Name = "BlackScreenCoconutLabel"
-BlackScreenCoconutLabel.Size = UDim2.new(1, 0, 0, 40)
-BlackScreenCoconutLabel.Position = UDim2.new(0, 0, 0.35, 230)
-BlackScreenCoconutLabel.BackgroundTransparency = 1
-BlackScreenCoconutLabel.Text = "🥥 Coconut: Loading..."
-BlackScreenCoconutLabel.TextColor3 = Color3.fromRGB(139, 90, 43)
-BlackScreenCoconutLabel.TextSize = 28
-BlackScreenCoconutLabel.Font = Enum.Font.GothamSemibold
-BlackScreenCoconutLabel.ZIndex = 101
-BlackScreenCoconutLabel.Parent = BlackScreen
+-- Padding cho container
+local ItemsPadding = Instance.new("UIPadding")
+ItemsPadding.PaddingLeft = UDim.new(0, 10)
+ItemsPadding.PaddingRight = UDim.new(0, 10)
+ItemsPadding.PaddingTop = UDim.new(0, 5)
+ItemsPadding.Parent = ItemsContainer
 
--- Black Screen Pineapple Display
-local BlackScreenPineappleLabel = Instance.new("TextLabel")
-BlackScreenPineappleLabel.Name = "BlackScreenPineappleLabel"
-BlackScreenPineappleLabel.Size = UDim2.new(1, 0, 0, 40)
-BlackScreenPineappleLabel.Position = UDim2.new(0, 0, 0.35, 270)
-BlackScreenPineappleLabel.BackgroundTransparency = 1
-BlackScreenPineappleLabel.Text = "🍍 Pineapple: Loading..."
-BlackScreenPineappleLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
-BlackScreenPineappleLabel.TextSize = 28
-BlackScreenPineappleLabel.Font = Enum.Font.GothamSemibold
-BlackScreenPineappleLabel.ZIndex = 101
-BlackScreenPineappleLabel.Parent = BlackScreen
-
--- Black Screen Blueberry Display
-local BlackScreenBlueberryLabel = Instance.new("TextLabel")
-BlackScreenBlueberryLabel.Name = "BlackScreenBlueberryLabel"
-BlackScreenBlueberryLabel.Size = UDim2.new(1, 0, 0, 40)
-BlackScreenBlueberryLabel.Position = UDim2.new(0, 0, 0.35, 310)
-BlackScreenBlueberryLabel.BackgroundTransparency = 1
-BlackScreenBlueberryLabel.Text = "🫐 Blueberry: Loading..."
-BlackScreenBlueberryLabel.TextColor3 = Color3.fromRGB(100, 100, 255)
-BlackScreenBlueberryLabel.TextSize = 28
-BlackScreenBlueberryLabel.Font = Enum.Font.GothamSemibold
-BlackScreenBlueberryLabel.ZIndex = 101
-BlackScreenBlueberryLabel.Parent = BlackScreen
-
--- Black Screen Sunflower Seed Display
-local BlackScreenSunflowerLabel = Instance.new("TextLabel")
-BlackScreenSunflowerLabel.Name = "BlackScreenSunflowerLabel"
-BlackScreenSunflowerLabel.Size = UDim2.new(1, 0, 0, 40)
-BlackScreenSunflowerLabel.Position = UDim2.new(0, 0, 0.35, 350)
-BlackScreenSunflowerLabel.BackgroundTransparency = 1
-BlackScreenSunflowerLabel.Text = "🌻 Sunflower Seed: Loading..."
-BlackScreenSunflowerLabel.TextColor3 = Color3.fromRGB(255, 220, 100)
-BlackScreenSunflowerLabel.TextSize = 28
-BlackScreenSunflowerLabel.Font = Enum.Font.GothamSemibold
-BlackScreenSunflowerLabel.ZIndex = 101
-BlackScreenSunflowerLabel.Parent = BlackScreen
+-- Bảng lưu các item labels đã tạo
+local itemLabels = {}
 
 -- Thông báo hướng dẫn mở menu
 local BlackScreenNoticeLabel = Instance.new("TextLabel")
 BlackScreenNoticeLabel.Name = "BlackScreenNoticeLabel"
 BlackScreenNoticeLabel.Size = UDim2.new(1, 0, 0, 30)
-BlackScreenNoticeLabel.Position = UDim2.new(0, 0, 0.35, 390)
+BlackScreenNoticeLabel.Position = UDim2.new(0, 0, 0.35, 460)
 BlackScreenNoticeLabel.BackgroundTransparency = 1
 BlackScreenNoticeLabel.Text = "⚠️ Mở menu Eggs/Items 1 lần để load dữ liệu ⚠️"
 BlackScreenNoticeLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
@@ -170,7 +126,7 @@ local itemsDataLoaded = false
 local BlackScreenCloseButton = Instance.new("TextButton")
 BlackScreenCloseButton.Name = "BlackScreenCloseButton"
 BlackScreenCloseButton.Size = UDim2.new(0, 200, 0, 50)
-BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 430)
+BlackScreenCloseButton.Position = UDim2.new(0.5, -100, 0.35, 500)
 BlackScreenCloseButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
 BlackScreenCloseButton.Text = "Black Screen"
 BlackScreenCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -434,75 +390,22 @@ local function calculateHoneyPerSecond(currentHoney)
     return honeyPerSecond
 end
 
--- Function to get item count by name (Bee Swarm Simulator specific)
-local function getItemCount(itemName)
-    local count = "0"
-    
-    -- Tìm trong EggRows - cấu trúc chính xác của Bee Swarm Simulator
-    pcall(function()
-        local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
-        if not screenGui then print("No ScreenGui") return end
-        
-        local menus = screenGui:FindFirstChild("Menus")
-        if not menus then print("No Menus") return end
-        
-        local children = menus:FindFirstChild("Children")
-        if not children then print("No Children") return end
-        
-        local eggs = children:FindFirstChild("Eggs")
-        if not eggs then print("No Eggs") return end
-        
-        local content = eggs:FindFirstChild("Content")
-        if not content then print("No Content") return end
-        
-        local eggRows = content:FindFirstChild("EggRows")
-        if not eggRows then print("No EggRows") return end
-        
-        -- Duyệt qua tất cả EggRow
-        for _, eggRow in pairs(eggRows:GetChildren()) do
-            -- Tìm TypeName trong tất cả descendants
-            for _, desc in pairs(eggRow:GetDescendants()) do
-                if desc:IsA("TextLabel") and desc.Name == "TypeName" and desc.Text == itemName then
-                    -- Tìm Count - có thể ở cùng level hoặc khác level
-                    -- Thử tìm trong parent của TypeName
-                    local parent = desc.Parent
-                    while parent and parent ~= eggRow.Parent do
-                        local countLabel = parent:FindFirstChild("Count")
-                        if countLabel and countLabel:IsA("TextLabel") then
-                            local text = countLabel.Text
-                            local numMatch = text:match("x?([%d,]+)")
-                            if numMatch then
-                                count = numMatch:gsub(",", "")
-                                return
-                            end
-                        end
-                        parent = parent.Parent
-                    end
-                    
-                    -- Thử tìm trong toàn bộ eggRow
-                    for _, child in pairs(eggRow:GetDescendants()) do
-                        if child:IsA("TextLabel") and child.Name == "Count" then
-                            local text = child.Text
-                            local numMatch = text:match("x?([%d,]+)")
-                            if numMatch then
-                                count = numMatch:gsub(",", "")
-                                return
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-    
-    return count
-end
-
 -- Biến để lưu cache items (sau khi mở menu 1 lần)
 local itemsCache = {}
+local itemsIconCache = {} -- Lưu icon của items
 local itemsCacheLoaded = false
 
--- Function để load tất cả items vào cache
+-- Function để kiểm tra item có phải là Jelly hoặc Egg không
+local function isJellyOrEgg(itemName)
+    if not itemName then return true end
+    local lowerName = itemName:lower()
+    -- Loại bỏ các item có chứa "jelly" hoặc "egg"
+    if string.find(lowerName, "jelly") then return true end
+    if string.find(lowerName, "egg") then return true end
+    return false
+end
+
+-- Function để load tất cả items vào cache (lọc bỏ Jelly và Egg)
 local function loadItemsCache()
     pcall(function()
         local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
@@ -527,6 +430,7 @@ local function loadItemsCache()
             -- Tìm trong descendants
             local typeName = nil
             local countLabel = nil
+            local iconImage = nil
             
             for _, desc in pairs(eggRow:GetDescendants()) do
                 if desc:IsA("TextLabel") then
@@ -535,6 +439,13 @@ local function loadItemsCache()
                     elseif desc.Name == "Count" then
                         countLabel = desc
                     end
+                elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                    -- Lấy icon từ EggIcon hoặc bất kỳ ImageLabel/ImageButton nào có Image
+                    if desc.Name == "EggIcon" or desc.Name == "Icon" or desc.Image ~= "" then
+                        if not iconImage and desc.Image and desc.Image ~= "" then
+                            iconImage = desc.Image
+                        end
+                    end
                 end
             end
             
@@ -542,8 +453,12 @@ local function loadItemsCache()
                 local name = typeName.Text
                 local text = countLabel.Text
                 local numMatch = text:match("x?([%d,]+)")
-                if numMatch and name and name ~= "" then
+                -- Chỉ lưu nếu không phải Jelly hoặc Egg
+                if numMatch and name and name ~= "" and not isJellyOrEgg(name) then
                     itemsCache[name] = numMatch:gsub(",", "")
+                    if iconImage then
+                        itemsIconCache[name] = iconImage
+                    end
                     itemsCacheLoaded = true
                 end
             end
@@ -551,22 +466,107 @@ local function loadItemsCache()
     end)
 end
 
+-- Function để tạo hoặc cập nhật label cho item
+local function createOrUpdateItemLabel(itemName, count)
+    local countNum = tonumber(count) or 0
+    
+    -- Nếu count = 0, ẩn hoặc xóa label nếu đã tồn tại
+    if countNum == 0 then
+        if itemLabels[itemName] then
+            itemLabels[itemName]:Destroy()
+            itemLabels[itemName] = nil
+            
+            -- Cập nhật CanvasSize
+            local totalItems = 0
+            for _ in pairs(itemLabels) do
+                totalItems = totalItems + 1
+            end
+            local itemsPerRow = 7
+            local rows = math.ceil(totalItems / itemsPerRow)
+            ItemsContainer.CanvasSize = UDim2.new(0, 0, 0, rows * 32 + 10)
+        end
+        return
+    end
+    
+    if not itemLabels[itemName] then
+        -- Tạo frame container cho item
+        local itemFrame = Instance.new("Frame")
+        itemFrame.Name = itemName
+        itemFrame.Size = UDim2.new(0, 160, 0, 30)
+        itemFrame.BackgroundTransparency = 0.7
+        itemFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        itemFrame.ZIndex = 101
+        itemFrame.Parent = ItemsContainer
+        
+        -- Bo góc cho frame
+        local frameCorner = Instance.new("UICorner")
+        frameCorner.CornerRadius = UDim.new(0, 6)
+        frameCorner.Parent = itemFrame
+        
+        -- Tạo icon nếu có
+        local icon = Instance.new("ImageLabel")
+        icon.Name = "Icon"
+        icon.Size = UDim2.new(0, 26, 0, 26)
+        icon.Position = UDim2.new(0, 2, 0.5, -13)
+        icon.BackgroundTransparency = 1
+        icon.ZIndex = 102
+        icon.Parent = itemFrame
+        
+        -- Set icon image nếu có trong cache
+        if itemsIconCache[itemName] then
+            icon.Image = itemsIconCache[itemName]
+        end
+        
+        -- Tạo label cho text
+        local label = Instance.new("TextLabel")
+        label.Name = "Label"
+        label.Size = UDim2.new(1, -32, 1, 0)
+        label.Position = UDim2.new(0, 30, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = itemName .. ": " .. count
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.TextSize = 11
+        label.Font = Enum.Font.GothamSemibold
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.TextScaled = false
+        label.TextTruncate = Enum.TextTruncate.AtEnd
+        label.ZIndex = 102
+        label.Parent = itemFrame
+        
+        itemLabels[itemName] = itemFrame
+        
+        -- Cập nhật CanvasSize dựa trên số hàng
+        local totalItems = 0
+        for _ in pairs(itemLabels) do
+            totalItems = totalItems + 1
+        end
+        local itemsPerRow = 8 -- 8 items mỗi hàng với width 160px
+        local rows = math.ceil(totalItems / itemsPerRow)
+        ItemsContainer.CanvasSize = UDim2.new(0, 0, 0, rows * 35 + 10)
+    else
+        -- Cập nhật label hiện có
+        local labelChild = itemLabels[itemName]:FindFirstChild("Label")
+        if labelChild then
+            labelChild.Text = itemName .. ": " .. count
+        end
+        
+        -- Cập nhật icon nếu có icon mới
+        local iconChild = itemLabels[itemName]:FindFirstChild("Icon")
+        if iconChild and itemsIconCache[itemName] and iconChild.Image == "" then
+            iconChild.Image = itemsIconCache[itemName]
+        end
+    end
+end
+
 -- Function để lấy item từ cache hoặc trực tiếp
 local function getItemCountCached(itemName)
-    -- Load cache mỗi lần để cập nhật số mới nhất
-    loadItemsCache()
-    
     -- Trả về từ cache nếu có
     if itemsCache[itemName] then
         return itemsCache[itemName]
     end
     
-    -- Fallback: lấy trực tiếp
-    return getItemCount(itemName)
+    return "0"
 end
-
--- Debug đã hoàn thành, tắt debug
-local debugRan = true
 
 -- Update loop
 local function updateDisplay()
@@ -623,40 +623,18 @@ local function updateDisplay()
             end
         end
         
-        -- Load cache từ menu Eggs nếu chưa có
+        -- Load cache từ menu Eggs
         loadItemsCache()
         
-        -- Update Strawberry count on Black Screen
-        local strawberryCount = getItemCountCached("Strawberry")
-        BlackScreenStrawberryLabel.Text = "🍓 Strawberry: " .. strawberryCount
+        -- Cập nhật tất cả items từ cache (đã lọc bỏ Jelly và Egg)
+        for itemName, count in pairs(itemsCache) do
+            createOrUpdateItemLabel(itemName, count)
+        end
         
-        -- Update Snowflake count on Black Screen
-        local snowflakeCount = getItemCountCached("Snowflake")
-        BlackScreenSnowflakeLabel.Text = "❄️ Snowflake: " .. snowflakeCount
-        
-        -- Update Coconut count on Black Screen
-        local coconutCount = getItemCountCached("Coconut")
-        BlackScreenCoconutLabel.Text = "🥥 Coconut: " .. coconutCount
-        
-        -- Update Pineapple count on Black Screen
-        local pineappleCount = getItemCountCached("Pineapple")
-        BlackScreenPineappleLabel.Text = "🍍 Pineapple: " .. pineappleCount
-        
-        -- Update Blueberry count on Black Screen
-        local blueberryCount = getItemCountCached("Blueberry")
-        BlackScreenBlueberryLabel.Text = "🍇 Blueberry: " .. blueberryCount
-        
-        -- Update Sunflower Seed count on Black Screen
-        local sunflowerCount = getItemCountCached("Sunflower Seed")
-        BlackScreenSunflowerLabel.Text = "🌻 Sunflower Seed: " .. sunflowerCount
-        
-        -- Ẩn thông báo nếu đã load được dữ liệu (bất kỳ item nào khác "0")
-        if not itemsDataLoaded then
-            if strawberryCount ~= "0" or snowflakeCount ~= "0" or coconutCount ~= "0" or 
-               pineappleCount ~= "0" or blueberryCount ~= "0" or sunflowerCount ~= "0" then
-                itemsDataLoaded = true
-                BlackScreenNoticeLabel.Visible = false
-            end
+        -- Ẩn thông báo nếu đã load được dữ liệu
+        if not itemsDataLoaded and itemsCacheLoaded then
+            itemsDataLoaded = true
+            BlackScreenNoticeLabel.Visible = false
         end
     end)
 end

@@ -519,8 +519,8 @@ local function createOrUpdateItemLabel(itemName, count)
         local itemFrame = Instance.new("Frame")
         itemFrame.Name = itemName
         itemFrame.Size = UDim2.new(0, 140, 0, 28)
-        itemFrame.BackgroundTransparency = 0.7
-        itemFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        itemFrame.BackgroundTransparency = 0.5
+        itemFrame.BackgroundColor3 = showPlus and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(40, 40, 40)
         itemFrame.ZIndex = 101
         itemFrame.Parent = ItemsContainer
         
@@ -575,6 +575,9 @@ local function createOrUpdateItemLabel(itemName, count)
         
         itemLabels[itemName] = itemFrame
     else
+        -- Cập nhật màu nền frame
+        itemLabels[itemName].BackgroundColor3 = showPlus and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(40, 40, 40)
+        
         -- Cập nhật label hiện có
         local labelChild = itemLabels[itemName]:FindFirstChild("Label")
         if labelChild then

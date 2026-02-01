@@ -15,6 +15,9 @@ local honeyHistory = {}
 -- Black Screen variables
 local blackScreenEnabled = false
 
+-- Server time tracking
+local serverJoinTime = tick()
+
 -- Create the UI
 local HoneyDisplayGui = Instance.new("ScreenGui")
 HoneyDisplayGui.Name = "HoneyDisplayGui"
@@ -33,11 +36,24 @@ BlackScreen.Visible = false
 BlackScreen.ZIndex = 100
 BlackScreen.Parent = HoneyDisplayGui
 
+-- Server Time Display (above Honey/s)
+local ServerTimeLabel = Instance.new("TextLabel")
+ServerTimeLabel.Name = "ServerTimeLabel"
+ServerTimeLabel.Size = UDim2.new(0.5, 0, 0, 30)
+ServerTimeLabel.Position = UDim2.new(0.25, 0, 0.25, 10)
+ServerTimeLabel.BackgroundTransparency = 1
+ServerTimeLabel.Text = "Server Time: 00:00:00"
+ServerTimeLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
+ServerTimeLabel.TextSize = 24
+ServerTimeLabel.Font = Enum.Font.GothamSemibold
+ServerTimeLabel.ZIndex = 101
+ServerTimeLabel.Parent = BlackScreen
+
 -- Black Screen Honey Per Second Display
 local BlackScreenHoneyLabel = Instance.new("TextLabel")
 BlackScreenHoneyLabel.Name = "BlackScreenHoneyLabel"
 BlackScreenHoneyLabel.Size = UDim2.new(0.5, 0, 0, 50)
-BlackScreenHoneyLabel.Position = UDim2.new(0.25, 0, 0.25, 10)
+BlackScreenHoneyLabel.Position = UDim2.new(0.25, 0, 0.25, 45)
 BlackScreenHoneyLabel.BackgroundTransparency = 1
 BlackScreenHoneyLabel.Text = "Honey/s: 0"
 BlackScreenHoneyLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
@@ -50,7 +66,7 @@ BlackScreenHoneyLabel.Parent = BlackScreen
 local BlackScreenPollenLabel = Instance.new("TextLabel")
 BlackScreenPollenLabel.Name = "BlackScreenPollenLabel"
 BlackScreenPollenLabel.Size = UDim2.new(0.5, 0, 0, 35)
-BlackScreenPollenLabel.Position = UDim2.new(0.25, 0, 0.25, 55)
+BlackScreenPollenLabel.Position = UDim2.new(0.25, 0, 0.25, 90)
 BlackScreenPollenLabel.BackgroundTransparency = 1
 BlackScreenPollenLabel.Text = "Pollen: 0/0 (0%)"
 BlackScreenPollenLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
@@ -63,7 +79,7 @@ BlackScreenPollenLabel.Parent = BlackScreen
 local BlackScreenHoneyTotalLabel = Instance.new("TextLabel")
 BlackScreenHoneyTotalLabel.Name = "BlackScreenHoneyTotalLabel"
 BlackScreenHoneyTotalLabel.Size = UDim2.new(0.5, 0, 0, 30)
-BlackScreenHoneyTotalLabel.Position = UDim2.new(0.25, 0, 0.25, 88)
+BlackScreenHoneyTotalLabel.Position = UDim2.new(0.25, 0, 0.25, 123)
 BlackScreenHoneyTotalLabel.BackgroundTransparency = 1
 BlackScreenHoneyTotalLabel.Text = "Honey: 0"
 BlackScreenHoneyTotalLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
@@ -75,8 +91,8 @@ BlackScreenHoneyTotalLabel.Parent = BlackScreen
 -- Container cho các items (sử dụng ScrollingFrame để có thể scroll nếu nhiều items)
 local ItemsContainer = Instance.new("ScrollingFrame")
 ItemsContainer.Name = "ItemsContainer"
-ItemsContainer.Size = UDim2.new(0.5, 0, 0.4, 0)
-ItemsContainer.Position = UDim2.new(0.25, 0, 0.25, 130)
+ItemsContainer.Size = UDim2.new(0.5, 0, 0.35, 0)
+ItemsContainer.Position = UDim2.new(0.25, 0, 0.25, 160)
 ItemsContainer.BackgroundTransparency = 1
 ItemsContainer.BorderSizePixel = 0
 ItemsContainer.ScrollBarThickness = 6
@@ -351,6 +367,14 @@ local function formatNumber(num)
     end
 end
 
+-- Function to format time (seconds to HH:MM:SS)
+local function formatTime(seconds)
+    local hours = math.floor(seconds / 3600)
+    local mins = math.floor((seconds % 3600) / 60)
+    local secs = math.floor(seconds % 60)
+    return string.format("%02d:%02d:%02d", hours, mins, secs)
+end
+
 -- Function to calculate honey per second (using rolling average over 5 seconds)
 local function calculateHoneyPerSecond(currentHoney)
     local currentTime = tick()
@@ -381,6 +405,8 @@ end
 -- Biến để lưu cache items (sau khi mở menu 1 lần)
 local itemsCache = {}
 local itemsIconCache = {} -- Lưu icon của items
+local itemsPrevCount = {} -- Lưu count trước đó để so sánh
+local itemsIncreaseTime = {} -- Thời gian hiển thị dấu +
 local itemsCacheLoaded = false
 
 -- Function để kiểm tra item có phải là Jelly hoặc Egg không
@@ -457,6 +483,20 @@ end
 -- Function để tạo hoặc cập nhật label cho item
 local function createOrUpdateItemLabel(itemName, count)
     local countNum = tonumber(count) or 0
+    local prevCount = itemsPrevCount[itemName] or 0
+    local currentTime = tick()
+    
+    -- Kiểm tra xem item có tăng không
+    local isIncreasing = countNum > prevCount and prevCount > 0
+    if isIncreasing then
+        itemsIncreaseTime[itemName] = currentTime
+    end
+    
+    -- Cập nhật count trước đó
+    itemsPrevCount[itemName] = countNum
+    
+    -- Kiểm tra xem có đang hiển thị dấu + không (trong vòng 3 giây)
+    local showPlus = itemsIncreaseTime[itemName] and (currentTime - itemsIncreaseTime[itemName]) < 3
     
     -- Nếu count = 0, ẩn hoặc xóa label nếu đã tồn tại
     if countNum == 0 then
@@ -465,6 +505,13 @@ local function createOrUpdateItemLabel(itemName, count)
             itemLabels[itemName] = nil
         end
         return
+    end
+    
+    -- Tạo text hiển thị
+    local displayText = itemName .. ": " .. count
+    local plusText = ""
+    if showPlus then
+        plusText = " +"
     end
     
     if not itemLabels[itemName] then
@@ -499,10 +546,10 @@ local function createOrUpdateItemLabel(itemName, count)
         -- Tạo label cho text
         local label = Instance.new("TextLabel")
         label.Name = "Label"
-        label.Size = UDim2.new(1, -28, 1, 0)
+        label.Size = UDim2.new(1, -50, 1, 0)
         label.Position = UDim2.new(0, 28, 0, 0)
         label.BackgroundTransparency = 1
-        label.Text = itemName .. ": " .. count
+        label.Text = displayText
         label.TextColor3 = Color3.fromRGB(255, 255, 255)
         label.TextSize = 10
         label.Font = Enum.Font.GothamSemibold
@@ -512,12 +559,32 @@ local function createOrUpdateItemLabel(itemName, count)
         label.ZIndex = 102
         label.Parent = itemFrame
         
+        -- Tạo label cho dấu + (bên phải)
+        local plusLabel = Instance.new("TextLabel")
+        plusLabel.Name = "PlusLabel"
+        plusLabel.Size = UDim2.new(0, 20, 1, 0)
+        plusLabel.Position = UDim2.new(1, -22, 0, 0)
+        plusLabel.BackgroundTransparency = 1
+        plusLabel.Text = plusText
+        plusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        plusLabel.TextSize = 14
+        plusLabel.Font = Enum.Font.GothamBold
+        plusLabel.TextXAlignment = Enum.TextXAlignment.Right
+        plusLabel.ZIndex = 102
+        plusLabel.Parent = itemFrame
+        
         itemLabels[itemName] = itemFrame
     else
         -- Cập nhật label hiện có
         local labelChild = itemLabels[itemName]:FindFirstChild("Label")
         if labelChild then
-            labelChild.Text = itemName .. ": " .. count
+            labelChild.Text = displayText
+        end
+        
+        -- Cập nhật dấu +
+        local plusLabelChild = itemLabels[itemName]:FindFirstChild("PlusLabel")
+        if plusLabelChild then
+            plusLabelChild.Text = plusText
         end
         
         -- Cập nhật icon nếu có icon mới
@@ -541,6 +608,10 @@ end
 -- Update loop
 local function updateDisplay()
     local success, err = pcall(function()
+        -- Update server time
+        local elapsedTime = tick() - serverJoinTime
+        ServerTimeLabel.Text = "Server Time: " .. formatTime(elapsedTime)
+        
         -- Get honey and pollen from CoreStats
         local coreStats = LocalPlayer:FindFirstChild("CoreStats")
         if coreStats then

@@ -1,28 +1,31 @@
 -- Arena (Zombie Survival) Auto-Shot / Kill Aura Script
 -- Game: Arena by Nectarforge Studios
--- Features: Kill Aura, Auto Buy Weapon, Auto Equip, Anti-AFK, Auto Collect Shards, Fixed Spawn TP, Auto Play Again
+-- Features: Kill Aura, Auto Buy Weapon, Auto Equip, Anti-AFK, Auto Collect Shards, Fixed Spawn TP
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local VirtualUser = game:GetService("VirtualUser")
 
 local LocalPlayer = Players.LocalPlayer
+local SETTINGS_FILE = "ArenaAutoShotSettings.json"
+local DEFAULT_SCRIPT_URL = ""
 
 getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
     Enabled = true,
-    KillDistance = 500,
-    AttackDelay = 0.1,
+    KillDistance = 2500,
+    AttackDelay = 0.03,
+    HitsPerTarget = 3,
+    MaxZombiesPerTick = 80,
     AutoBuyWeapon = true,
     MaxWeaponPurchases = 1,
     AutoEquip = true,
     AntiAFK = true,
     AutoCollect = true,
-    AutoPlayAgain = true,
-    ScriptPath = "D:/robloxluau/alime.lua/arena_autoshot.lua",
-    SettingsFile = "ArenaAutoShotSettings.json",
+    Debug = false,
+    ScriptUrl = DEFAULT_SCRIPT_URL,
+    SettingsFile = SETTINGS_FILE,
 
     Lobby = {
         Enabled = true,
@@ -30,7 +33,10 @@ getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
         PartySize = 1,
         Difficulty = "Normal",
         Map = "Default",
-        TweenSpeed = 45
+        TweenSpeed = 45,
+        RetryDelay = 3,
+        MaxJoinAttempts = 12,
+        TeleportWait = 8
     },
 
     FixedSpawn = {
@@ -40,15 +46,19 @@ getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
 }
 
 local Config = getgenv().ArenaAutoShotConfig
-Config.SettingsFile = Config.SettingsFile or "ArenaAutoShotSettings.json"
-Config.ScriptPath = Config.ScriptPath or "D:/robloxluau/alime.lua/arena_autoshot.lua"
+getgenv().Config = Config
+Config.SettingsFile = Config.SettingsFile or SETTINGS_FILE
+Config.ScriptUrl = Config.ScriptUrl or DEFAULT_SCRIPT_URL
 Config.Lobby = Config.Lobby or {
     Enabled = true,
     ShipName = "Ship1",
     PartySize = 1,
     Difficulty = "Normal",
     Map = "Default",
-    TweenSpeed = 45
+    TweenSpeed = 45,
+    RetryDelay = 3,
+    MaxJoinAttempts = 12,
+    TeleportWait = 8
 }
 Config.FixedSpawn = Config.FixedSpawn or {
     Enabled = true,
@@ -56,10 +66,31 @@ Config.FixedSpawn = Config.FixedSpawn or {
 }
 getgenv().ArenaAutoShotState = getgenv().ArenaAutoShotState or {
     LobbyStarted = false,
-    WeaponPurchases = 0
+    WeaponPurchases = 0,
+    RunId = 0
 }
 local State = getgenv().ArenaAutoShotState
 State.WeaponPurchases = State.WeaponPurchases or 0
+State.RunId = State.RunId or 0
+
+local function debug_log(...)
+    if Config.Debug then
+        print("[ArenaAutoShot]", ...)
+    end
+end
+
+local function validate_config()
+    Config.KillDistance = math.max(1, tonumber(Config.KillDistance) or 500)
+    Config.AttackDelay = math.max(0.03, tonumber(Config.AttackDelay) or 0.1)
+    Config.HitsPerTarget = math.clamp(math.floor(tonumber(Config.HitsPerTarget) or 1), 1, 10)
+    Config.MaxZombiesPerTick = math.clamp(math.floor(tonumber(Config.MaxZombiesPerTick) or 50), 1, 250)
+    Config.MaxWeaponPurchases = math.max(0, math.floor(tonumber(Config.MaxWeaponPurchases) or 1))
+    Config.Lobby.PartySize = math.max(1, math.floor(tonumber(Config.Lobby.PartySize) or 1))
+    Config.Lobby.TweenSpeed = math.max(1, tonumber(Config.Lobby.TweenSpeed) or 45)
+    Config.Lobby.RetryDelay = math.max(1, tonumber(Config.Lobby.RetryDelay) or 3)
+    Config.Lobby.MaxJoinAttempts = math.max(1, math.floor(tonumber(Config.Lobby.MaxJoinAttempts) or 12))
+    Config.Lobby.TeleportWait = math.max(1, tonumber(Config.Lobby.TeleportWait) or 8)
+end
 
 local function can_use_files()
     return type(isfile) == "function"
@@ -76,12 +107,15 @@ local function apply_saved_settings(settings)
         "Enabled",
         "KillDistance",
         "AttackDelay",
+        "HitsPerTarget",
+        "MaxZombiesPerTick",
         "AutoBuyWeapon",
         "MaxWeaponPurchases",
         "AutoEquip",
         "AntiAFK",
         "AutoCollect",
-        "AutoPlayAgain"
+        "ScriptUrl",
+        "Debug"
     }
 
     for i = 1, #scalar_keys do
@@ -110,6 +144,7 @@ local function load_settings()
 
     if ok then
         apply_saved_settings(decoded)
+        validate_config()
     else
         warn("Arena Settings: failed to load settings file")
     end
@@ -124,19 +159,25 @@ local function save_settings()
         Enabled = Config.Enabled,
         KillDistance = Config.KillDistance,
         AttackDelay = Config.AttackDelay,
+        HitsPerTarget = Config.HitsPerTarget,
+        MaxZombiesPerTick = Config.MaxZombiesPerTick,
         AutoBuyWeapon = Config.AutoBuyWeapon,
         MaxWeaponPurchases = Config.MaxWeaponPurchases,
         AutoEquip = Config.AutoEquip,
         AntiAFK = Config.AntiAFK,
         AutoCollect = Config.AutoCollect,
-        AutoPlayAgain = Config.AutoPlayAgain,
+        ScriptUrl = Config.ScriptUrl,
+        Debug = Config.Debug,
         Lobby = {
             Enabled = Config.Lobby.Enabled,
             ShipName = Config.Lobby.ShipName,
             PartySize = Config.Lobby.PartySize,
             Difficulty = Config.Lobby.Difficulty,
             Map = Config.Lobby.Map,
-            TweenSpeed = Config.Lobby.TweenSpeed
+            TweenSpeed = Config.Lobby.TweenSpeed,
+            RetryDelay = Config.Lobby.RetryDelay,
+            MaxJoinAttempts = Config.Lobby.MaxJoinAttempts,
+            TeleportWait = Config.Lobby.TeleportWait
         }
     }
 
@@ -145,23 +186,30 @@ local function save_settings()
     end)
 
     if ok then
-        writefile(Config.SettingsFile, encoded)
-        return true
+        local write_ok = pcall(function()
+            writefile(Config.SettingsFile, encoded)
+        end)
+        return write_ok
     end
 
     return false
 end
 
 load_settings()
-Config.MaxWeaponPurchases = Config.MaxWeaponPurchases or 1
+validate_config()
 
 local function queue_self_after_teleport()
+    if type(Config.ScriptUrl) ~= "string" or Config.ScriptUrl == "" then
+        warn("Arena Lobby: ScriptUrl is empty, cannot queue script after teleport")
+        return
+    end
+
     local source = string.format([[
         task.wait(3)
         pcall(function()
-            loadstring(readfile(%q))()
+            loadstring(game:HttpGet(%q))()
         end)
-    ]], Config.ScriptPath)
+    ]], Config.ScriptUrl)
 
     if syn and syn.queue_on_teleport then
         syn.queue_on_teleport(source)
@@ -179,6 +227,108 @@ local function is_lobby()
     return Config.Lobby.Enabled
         and ReplicatedStorage:FindFirstChild("QueueRemotes") ~= nil
         and workspace:FindFirstChild("Queues") ~= nil
+end
+
+local function read_queue_number(instance, names)
+    for _, name in ipairs(names) do
+        local value = instance:GetAttribute(name)
+        if tonumber(value) then
+            return tonumber(value)
+        end
+    end
+
+    for _, descendant in ipairs(instance:GetDescendants()) do
+        if descendant:IsA("IntValue") or descendant:IsA("NumberValue") then
+            local lower_name = descendant.Name:lower()
+            for _, name in ipairs(names) do
+                if lower_name:find(name:lower(), 1, true) then
+                    return tonumber(descendant.Value)
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+local function read_queue_capacity_from_text(ship)
+    for _, descendant in ipairs(ship:GetDescendants()) do
+        if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+            local current, max = tostring(descendant.Text):match("(%d+)%s*/%s*(%d+)")
+            if current and max then
+                return tonumber(current), tonumber(max)
+            end
+        end
+    end
+
+    return nil, nil
+end
+
+local function get_queue_room_count(ship)
+    local current = read_queue_number(ship, {"CurrentPlayers", "PlayerCount", "Players", "Count", "Amount"})
+    local max = read_queue_number(ship, {"MaxPlayers", "MaxPlayer", "Capacity", "MaxSize", "Size"})
+
+    if not current or not max then
+        local text_current, text_max = read_queue_capacity_from_text(ship)
+        current = current or text_current
+        max = max or text_max
+    end
+
+    local players_folder = ship:FindFirstChild("Players") or ship:FindFirstChild("Members")
+    if not current and players_folder then
+        current = #players_folder:GetChildren()
+    end
+
+    return current, max
+end
+
+local function is_queue_room_full(ship)
+    local current, max = get_queue_room_count(ship)
+    return current ~= nil and max ~= nil and max > 0 and current >= max
+end
+
+local function get_queue_touch_part(ship)
+    return ship and (ship:FindFirstChild("TouchPart") or ship:FindFirstChildWhichIsA("BasePart", true))
+end
+
+local function get_queue_order(queues)
+    local ships = {}
+    local preferred = queues:FindFirstChild(Config.Lobby.ShipName)
+
+    if preferred then
+        table.insert(ships, preferred)
+    end
+
+    local others = queues:GetChildren()
+    table.sort(others, function(a, b)
+        return a.Name < b.Name
+    end)
+
+    for _, ship in ipairs(others) do
+        if ship ~= preferred and get_queue_touch_part(ship) then
+            table.insert(ships, ship)
+        end
+    end
+
+    return ships
+end
+
+local function find_available_queue_ship(queues, skipped_ships)
+    local first_valid
+    for _, ship in ipairs(get_queue_order(queues)) do
+        if get_queue_touch_part(ship) and not skipped_ships[ship] then
+            first_valid = first_valid or ship
+            if not is_queue_room_full(ship) then
+                return ship, false
+            end
+        end
+    end
+
+    return first_valid, first_valid ~= nil
+end
+
+local function still_in_lobby()
+    return ReplicatedStorage:FindFirstChild("QueueRemotes") ~= nil and workspace:FindFirstChild("Queues") ~= nil
 end
 
 local function run_lobby()
@@ -203,40 +353,72 @@ local function run_lobby()
     queue_self_after_teleport()
     State.LobbyStarted = true
 
-    local hrp = get_root_part()
-    local ship = queues:FindFirstChild(Config.Lobby.ShipName)
-    local touch_part = ship and ship:FindFirstChild("TouchPart")
-    if not hrp or not touch_part then
-        warn("Arena Lobby: failed to find ship " .. tostring(Config.Lobby.ShipName))
-        return
+    local attempts = 0
+    local skipped_ships = {}
+    while attempts < Config.Lobby.MaxJoinAttempts and still_in_lobby() do
+        attempts += 1
+
+        local ship, all_full = find_available_queue_ship(queues, skipped_ships)
+        if not ship then
+            warn("Arena Lobby: no open queue ships found, waiting")
+            skipped_ships = {}
+            task.wait(Config.Lobby.RetryDelay)
+            continue
+        end
+
+        if all_full then
+            warn("Arena Lobby: all queue rooms look full, waiting")
+            task.wait(Config.Lobby.RetryDelay)
+            continue
+        end
+
+        local hrp = get_root_part()
+        local touch_part = get_queue_touch_part(ship)
+        if not hrp or not touch_part then
+            warn("Arena Lobby: failed to find touch part for " .. tostring(ship.Name))
+            task.wait(Config.Lobby.RetryDelay)
+            continue
+        end
+
+        local distance = (hrp.Position - touch_part.Position).Magnitude
+        local duration = distance / Config.Lobby.TweenSpeed
+        local tween = TweenService:Create(hrp, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+            CFrame = touch_part.CFrame
+        })
+
+        print("Arena Lobby: moving to " .. ship.Name)
+        tween:Play()
+        tween.Completed:Wait()
+        tween:Destroy()
+
+        if firetouchinterest then
+            firetouchinterest(hrp, touch_part, 0)
+            task.wait(0.1)
+            firetouchinterest(hrp, touch_part, 1)
+        end
+
+        task.wait(1.5)
+        print("Arena Lobby: creating party in " .. ship.Name)
+        create_party:FireServer(Config.Lobby.PartySize, Config.Lobby.Difficulty, Config.Lobby.Map)
+        task.wait(Config.Lobby.TeleportWait)
+        if still_in_lobby() then
+            skipped_ships[ship] = true
+            warn("Arena Lobby: still in lobby after trying " .. ship.Name .. ", switching room")
+        end
     end
 
-    local distance = (hrp.Position - touch_part.Position).Magnitude
-    local duration = distance / Config.Lobby.TweenSpeed
-    local tween = TweenService:Create(hrp, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-        CFrame = touch_part.CFrame
-    })
-
-    print("Arena Lobby: moving to " .. Config.Lobby.ShipName)
-    tween:Play()
-    tween.Completed:Wait()
-    tween:Destroy()
-
-    if firetouchinterest then
-        firetouchinterest(hrp, touch_part, 0)
-        task.wait(0.1)
-        firetouchinterest(hrp, touch_part, 1)
+    if still_in_lobby() then
+        warn("Arena Lobby: join stopped after max attempts")
     end
-
-    task.wait(1.5)
-    print("Arena Lobby: creating party")
-    create_party:FireServer(Config.Lobby.PartySize, Config.Lobby.Difficulty, Config.Lobby.Map)
 end
 
 if is_lobby() then
     run_lobby()
     return
 end
+
+State.RunId += 1
+local run_id = State.RunId
 
 -- REMOTES
 local GunRemotes = ReplicatedStorage:WaitForChild("GunRemotes")
@@ -269,11 +451,11 @@ local function create_weapon_purchase_ui()
     gui.Name = "ArenaAutoShotUI"
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
-    gui.Parent = player_gui
 
     if syn and syn.protect_gui then
         pcall(syn.protect_gui, gui)
     end
+    gui.Parent = player_gui
 
     local frame = Instance.new("Frame")
     frame.Name = "WeaponPurchasePanel"
@@ -368,29 +550,32 @@ local function create_weapon_purchase_ui()
     reset_corner.CornerRadius = UDim.new(0, 6)
     reset_corner.Parent = reset
 
-    local function set_limit(value)
+    local function set_limit(value, should_save)
         value = math.max(0, math.floor(tonumber(value) or Config.MaxWeaponPurchases or 1))
         Config.MaxWeaponPurchases = value
         input.Text = tostring(value)
         status.Text = string.format("Bought: %d / %s", State.WeaponPurchases, value == 0 and "inf" or tostring(value))
-        save_settings()
+        if should_save then
+            save_settings()
+        end
     end
 
     minus.MouseButton1Click:Connect(function()
-        set_limit((tonumber(input.Text) or Config.MaxWeaponPurchases or 1) - 1)
+        set_limit((tonumber(input.Text) or Config.MaxWeaponPurchases or 1) - 1, true)
     end)
 
     plus.MouseButton1Click:Connect(function()
-        set_limit((tonumber(input.Text) or Config.MaxWeaponPurchases or 1) + 1)
+        set_limit((tonumber(input.Text) or Config.MaxWeaponPurchases or 1) + 1, true)
     end)
 
     input.FocusLost:Connect(function()
-        set_limit(input.Text)
+        validate_config()
+        set_limit(input.Text, true)
     end)
 
     reset.MouseButton1Click:Connect(function()
         State.WeaponPurchases = 0
-        set_limit(Config.MaxWeaponPurchases)
+        set_limit(Config.MaxWeaponPurchases, true)
     end)
 
     task.spawn(function()
@@ -404,7 +589,7 @@ local function create_weapon_purchase_ui()
         end
     end)
 
-    set_limit(Config.MaxWeaponPurchases)
+    set_limit(Config.MaxWeaponPurchases, false)
 end
 
 create_weapon_purchase_ui()
@@ -429,7 +614,8 @@ end
 
 -- 0.2 FIXED SPAWN TP
 task.spawn(function()
-    while task.wait(1) do
+    while run_id == State.RunId do
+        task.wait(1)
         if Config.FixedSpawn.Enabled then
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
@@ -442,28 +628,8 @@ task.spawn(function()
     end
 end)
 
--- 0.3 AUTO PLAY AGAIN
-task.spawn(function()
-    while task.wait(3) do
-        if Config.AutoPlayAgain then
-            local gameOverGui = LocalPlayer.PlayerGui:FindFirstChild("GameOver")
-            if gameOverGui and gameOverGui.Enabled then
-                local playAgainBtn = gameOverGui:FindFirstChild("PlayAgain", true)
-                if playAgainBtn then
-                    print("Game Over! Clicking Play Again...")
-                    for _, signal in pairs({"Activated", "MouseButton1Click"}) do
-                        for _, connection in pairs(getconnections(playAgainBtn[signal])) do
-                            connection:Fire()
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- Helper: Get Equipped Gun Name
-local function GetEquippedGunName()
+-- Helper: Get equipped gun name
+local function get_equipped_gun_name()
     local char = LocalPlayer.Character
     if char then
         local tool = char:FindFirstChildWhichIsA("Tool")
@@ -474,18 +640,47 @@ local function GetEquippedGunName()
     return nil
 end
 
--- Helper: Extract ID from "Zombie_ID"
-local function GetZombieId(name)
+-- Helper: Extract id from "Zombie_ID"
+local function get_zombie_id(name)
     local id = name:match("Zombie_(%d+)")
     return id and tonumber(id) or nil
 end
 
+local function get_zombie_hit_part(zombie)
+    if zombie.PrimaryPart then
+        return zombie.PrimaryPart
+    end
+
+    return zombie:FindFirstChild("HumanoidRootPart")
+        or zombie:FindFirstChild("Head")
+        or zombie:FindFirstChildWhichIsA("BasePart")
+end
+
+local function hit_zombie(gun_name, zombie, z_id)
+    local hit_part = get_zombie_hit_part(zombie)
+    if not hit_part then
+        return
+    end
+
+    for _ = 1, Config.HitsPerTarget do
+        local ok, err = pcall(function()
+            GunHit:FireServer(gun_name, z_id, hit_part.Position)
+        end)
+        if not ok then
+            debug_log("gun hit failed:", err)
+            return
+        end
+    end
+end
+
 -- 1. KILL AURA LOOP
 task.spawn(function()
-    while task.wait(Config.AttackDelay) do
+    while run_id == State.RunId do
+        task.wait(Config.AttackDelay)
+        validate_config()
         if not Config.Enabled then continue end
         
-        local gunName = GetEquippedGunName()
+        local gunName = get_equipped_gun_name()
         if not gunName then continue end
         
         local char = LocalPlayer.Character
@@ -494,14 +689,27 @@ task.spawn(function()
         
         local zombiesLocal = workspace:FindFirstChild("Zombies_Local")
         if not zombiesLocal then continue end
-        
-        for _, zombie in pairs(zombiesLocal:GetChildren()) do
-            if zombie:IsA("Model") and zombie.PrimaryPart then
-                local dist = (myPos - zombie.PrimaryPart.Position).Magnitude
+
+        local zombies = zombiesLocal:GetChildren()
+        local attacked = 0
+        for i = 1, #zombies do
+            if attacked >= Config.MaxZombiesPerTick then
+                break
+            end
+
+            local zombie = zombies[i]
+            if zombie:IsA("Model") then
+                local hit_part = get_zombie_hit_part(zombie)
+                if not hit_part then
+                    continue
+                end
+
+                local dist = (myPos - hit_part.Position).Magnitude
                 if dist <= Config.KillDistance then
-                    local zId = GetZombieId(zombie.Name)
+                    local zId = get_zombie_id(zombie.Name)
                     if zId then
-                        GunHit:FireServer(gunName, zId, zombie.PrimaryPart.Position)
+                        hit_zombie(gunName, zombie, zId)
+                        attacked += 1
                         
                         if Config.AutoCollect then
                             task.spawn(function()
@@ -518,25 +726,31 @@ end)
 
 -- 2. AUTO BUY WEAPON LOOP
 task.spawn(function()
-    while task.wait(5) do
+    while run_id == State.RunId do
+        task.wait(5)
+        validate_config()
         if not Config.AutoBuyWeapon then continue end
         if Config.MaxWeaponPurchases > 0 and State.WeaponPurchases >= Config.MaxWeaponPurchases then continue end
         
-        pcall(function()
+        local ok, err = pcall(function()
             local upgrades = GetUpgrades:InvokeServer()
             local minerals = GetMinerals:InvokeServer()
             
-            if upgrades and not upgrades.IsMaxWeapon and minerals >= upgrades.NextWeapon.Price then
+            if upgrades and upgrades.NextWeapon and not upgrades.IsMaxWeapon and minerals >= upgrades.NextWeapon.Price then
                 PurchaseWeaponUpgrade:FireServer()
                 State.WeaponPurchases += 1
             end
         end)
+        if not ok then
+            debug_log("auto buy failed:", err)
+        end
     end
 end)
 
 -- 3. AUTO EQUIP LOOP
 task.spawn(function()
-    while task.wait(1) do
+    while run_id == State.RunId do
+        task.wait(1)
         if not Config.AutoEquip then continue end
         local char = LocalPlayer.Character
         if not char then continue end

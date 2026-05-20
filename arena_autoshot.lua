@@ -8,9 +8,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local VirtualUser = game:GetService("VirtualUser")
 
-local LocalPlayer = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
 local SETTINGS_FILE = "ArenaAutoShotSettings.json"
-local DEFAULT_SCRIPT_URL = ""
+local DEFAULT_SCRIPT_URL = "https://raw.githubusercontent.com/Mhna3112/dislayhoney/refs/heads/main/arena_autoshot.lua"
+local LOBBY_PLACE_ID = 114204398207377
 
 getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
     Enabled = true,
@@ -23,6 +24,13 @@ getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
     AutoEquip = true,
     AntiAFK = true,
     AutoCollect = true,
+    AutoSkill = false,
+    AutoSkillDelay = 1,
+    AutoSkillKeys = {
+        E = true,
+        R = true,
+        Q = true
+    },
     Debug = false,
     ScriptUrl = DEFAULT_SCRIPT_URL,
     SettingsFile = SETTINGS_FILE,
@@ -64,6 +72,11 @@ Config.FixedSpawn = Config.FixedSpawn or {
     Enabled = true,
     Position = Vector3.new(-265.59295654297, 478.25930786133, -335.0315246582)
 }
+Config.AutoSkillKeys = Config.AutoSkillKeys or {
+    E = true,
+    R = true,
+    Q = true
+}
 getgenv().ArenaAutoShotState = getgenv().ArenaAutoShotState or {
     LobbyStarted = false,
     WeaponPurchases = 0,
@@ -85,6 +98,11 @@ local function validate_config()
     Config.HitsPerTarget = math.clamp(math.floor(tonumber(Config.HitsPerTarget) or 1), 1, 10)
     Config.MaxZombiesPerTick = math.clamp(math.floor(tonumber(Config.MaxZombiesPerTick) or 50), 1, 250)
     Config.MaxWeaponPurchases = math.max(0, math.floor(tonumber(Config.MaxWeaponPurchases) or 1))
+    Config.AutoSkillDelay = math.max(0.25, tonumber(Config.AutoSkillDelay) or 1)
+    Config.AutoSkillKeys = Config.AutoSkillKeys or {}
+    Config.AutoSkillKeys.E = Config.AutoSkillKeys.E ~= false
+    Config.AutoSkillKeys.R = Config.AutoSkillKeys.R ~= false
+    Config.AutoSkillKeys.Q = Config.AutoSkillKeys.Q ~= false
     Config.Lobby.PartySize = math.max(1, math.floor(tonumber(Config.Lobby.PartySize) or 1))
     Config.Lobby.TweenSpeed = math.max(1, tonumber(Config.Lobby.TweenSpeed) or 45)
     Config.Lobby.RetryDelay = math.max(1, tonumber(Config.Lobby.RetryDelay) or 3)
@@ -114,6 +132,8 @@ local function apply_saved_settings(settings)
         "AutoEquip",
         "AntiAFK",
         "AutoCollect",
+        "AutoSkill",
+        "AutoSkillDelay",
         "ScriptUrl",
         "Debug"
     }
@@ -129,6 +149,13 @@ local function apply_saved_settings(settings)
         Config.Lobby = Config.Lobby or {}
         for key, value in pairs(settings.Lobby) do
             Config.Lobby[key] = value
+        end
+    end
+
+    if type(settings.AutoSkillKeys) == "table" then
+        Config.AutoSkillKeys = Config.AutoSkillKeys or {}
+        for key, value in pairs(settings.AutoSkillKeys) do
+            Config.AutoSkillKeys[key] = value
         end
     end
 end
@@ -166,6 +193,13 @@ local function save_settings()
         AutoEquip = Config.AutoEquip,
         AntiAFK = Config.AntiAFK,
         AutoCollect = Config.AutoCollect,
+        AutoSkill = Config.AutoSkill,
+        AutoSkillDelay = Config.AutoSkillDelay,
+        AutoSkillKeys = {
+            E = Config.AutoSkillKeys.E,
+            R = Config.AutoSkillKeys.R,
+            Q = Config.AutoSkillKeys.Q
+        },
         ScriptUrl = Config.ScriptUrl,
         Debug = Config.Debug,
         Lobby = {
@@ -219,11 +253,23 @@ local function queue_self_after_teleport()
 end
 
 local function get_root_part()
-    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local player = LocalPlayer or Players.LocalPlayer
+    while not player do
+        task.wait(0.1)
+        player = Players.LocalPlayer
+    end
+
+    LocalPlayer = player
+
+    local character = player.Character or player.CharacterAdded:Wait()
     return character:WaitForChild("HumanoidRootPart", 10)
 end
 
 local function is_lobby()
+    if game.PlaceId == LOBBY_PLACE_ID then
+        return true
+    end
+
     return Config.Lobby.Enabled
         and ReplicatedStorage:FindFirstChild("QueueRemotes") ~= nil
         and workspace:FindFirstChild("Queues") ~= nil
@@ -419,6 +465,7 @@ end
 
 State.RunId += 1
 local run_id = State.RunId
+local BUTTON_SIGNALS = {"Activated", "MouseButton1Click"}
 
 -- REMOTES
 local GunRemotes = ReplicatedStorage:WaitForChild("GunRemotes")
@@ -461,7 +508,7 @@ local function create_weapon_purchase_ui()
     frame.Name = "WeaponPurchasePanel"
     frame.AnchorPoint = Vector2.new(1, 0)
     frame.Position = UDim2.new(1, -16, 0, 96)
-    frame.Size = UDim2.new(0, 230, 0, 118)
+    frame.Size = UDim2.new(0, 230, 0, 190)
     frame.BackgroundColor3 = Color3.fromRGB(24, 25, 28)
     frame.BorderSizePixel = 0
     frame.Parent = gui
@@ -550,11 +597,70 @@ local function create_weapon_purchase_ui()
     reset_corner.CornerRadius = UDim.new(0, 6)
     reset_corner.Parent = reset
 
+    local skill_toggle = Instance.new("TextButton")
+    skill_toggle.Name = "AutoSkillToggle"
+    skill_toggle.Position = UDim2.new(0, 12, 0, 116)
+    skill_toggle.Size = UDim2.new(1, -24, 0, 26)
+    skill_toggle.BorderSizePixel = 0
+    skill_toggle.Font = Enum.Font.GothamBold
+    skill_toggle.TextSize = 12
+    skill_toggle.Parent = frame
+
+    local skill_corner = Instance.new("UICorner")
+    skill_corner.CornerRadius = UDim.new(0, 6)
+    skill_corner.Parent = skill_toggle
+
+    local skill_buttons = {}
+    local function make_skill_key_button(key_name, x)
+        local button = Instance.new("TextButton")
+        button.Name = "AutoSkill" .. key_name
+        button.Position = UDim2.new(0, x, 0, 150)
+        button.Size = UDim2.new(0, 62, 0, 26)
+        button.BorderSizePixel = 0
+        button.Font = Enum.Font.GothamBold
+        button.TextSize = 12
+        button.Parent = frame
+
+        local button_corner = Instance.new("UICorner")
+        button_corner.CornerRadius = UDim.new(0, 6)
+        button_corner.Parent = button
+
+        skill_buttons[key_name] = button
+        return button
+    end
+
+    make_skill_key_button("E", 12)
+    make_skill_key_button("R", 84)
+    make_skill_key_button("Q", 156)
+
     local function set_limit(value, should_save)
         value = math.max(0, math.floor(tonumber(value) or Config.MaxWeaponPurchases or 1))
         Config.MaxWeaponPurchases = value
         input.Text = tostring(value)
         status.Text = string.format("Bought: %d / %s", State.WeaponPurchases, value == 0 and "inf" or tostring(value))
+        if should_save then
+            save_settings()
+        end
+    end
+
+    local function set_auto_skill(enabled, should_save)
+        Config.AutoSkill = enabled == true
+        skill_toggle.Text = Config.AutoSkill and "Auto Skill: ON" or "Auto Skill: OFF"
+        skill_toggle.BackgroundColor3 = Config.AutoSkill and Color3.fromRGB(42, 92, 62) or Color3.fromRGB(56, 50, 48)
+        skill_toggle.TextColor3 = Config.AutoSkill and Color3.fromRGB(220, 255, 230) or Color3.fromRGB(235, 225, 220)
+        if should_save then
+            save_settings()
+        end
+    end
+
+    local function set_skill_key(key_name, enabled, should_save)
+        Config.AutoSkillKeys[key_name] = enabled == true
+        local button = skill_buttons[key_name]
+        if button then
+            button.Text = key_name .. ": " .. (Config.AutoSkillKeys[key_name] and "ON" or "OFF")
+            button.BackgroundColor3 = Config.AutoSkillKeys[key_name] and Color3.fromRGB(42, 70, 92) or Color3.fromRGB(58, 42, 42)
+            button.TextColor3 = Config.AutoSkillKeys[key_name] and Color3.fromRGB(220, 238, 255) or Color3.fromRGB(255, 225, 225)
+        end
         if should_save then
             save_settings()
         end
@@ -578,6 +684,16 @@ local function create_weapon_purchase_ui()
         set_limit(Config.MaxWeaponPurchases, true)
     end)
 
+    skill_toggle.MouseButton1Click:Connect(function()
+        set_auto_skill(not Config.AutoSkill, true)
+    end)
+
+    for _, key_name in ipairs({"E", "R", "Q"}) do
+        skill_buttons[key_name].MouseButton1Click:Connect(function()
+            set_skill_key(key_name, not Config.AutoSkillKeys[key_name], true)
+        end)
+    end
+
     task.spawn(function()
         while gui.Parent do
             status.Text = string.format(
@@ -590,6 +706,10 @@ local function create_weapon_purchase_ui()
     end)
 
     set_limit(Config.MaxWeaponPurchases, false)
+    set_auto_skill(Config.AutoSkill, false)
+    set_skill_key("E", Config.AutoSkillKeys.E, false)
+    set_skill_key("R", Config.AutoSkillKeys.R, false)
+    set_skill_key("Q", Config.AutoSkillKeys.Q, false)
 end
 
 create_weapon_purchase_ui()
@@ -767,4 +887,71 @@ task.spawn(function()
     end
 end)
 
-print("Arena Script: Full Farm + Auto Play Again Loaded!")
+local function fire_gui_button(button)
+    if not button or not button.Visible or not button.Active then
+        return false
+    end
+
+    if type(firesignal) == "function" then
+        for i = 1, #BUTTON_SIGNALS do
+            local event = button[BUTTON_SIGNALS[i]]
+            if event then
+                pcall(firesignal, event)
+            end
+        end
+        return true
+    end
+
+    if type(getconnections) == "function" then
+        for i = 1, #BUTTON_SIGNALS do
+            local event = button[BUTTON_SIGNALS[i]]
+            if event then
+                local ok, connections = pcall(getconnections, event)
+                if ok then
+                    for index = 1, #connections do
+                        pcall(function()
+                            connections[index]:Fire()
+                        end)
+                    end
+                end
+            end
+        end
+        return true
+    end
+
+    return false
+end
+
+local function can_use_gear_button(button)
+    local cooldown = button and button:FindFirstChild("CooldownOverlay", true)
+    return button ~= nil and button.Visible and button.Active and not (cooldown and cooldown.Visible)
+end
+
+-- 4. AUTO SKILL LOOP
+task.spawn(function()
+    while run_id == State.RunId do
+        task.wait(Config.AutoSkillDelay)
+        validate_config()
+        if not Config.AutoSkill then continue end
+
+        local player_gui = LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui")
+        local main_gui = player_gui and player_gui:FindFirstChild("MainGui")
+        if not main_gui then continue end
+
+        local gear_slots = {
+            {Name = "Gear1", Key = "E"},
+            {Name = "Gear2", Key = "R"},
+            {Name = "Gear3", Key = "Q"}
+        }
+
+        for _, gear in ipairs(gear_slots) do
+            local button = main_gui:FindFirstChild(gear.Name, true)
+            if Config.AutoSkillKeys[gear.Key] and can_use_gear_button(button) then
+                fire_gui_button(button)
+                task.wait(0.15)
+            end
+        end
+    end
+end)
+
+print("Arena Script: Full Farm + Auto Skill Loaded!")

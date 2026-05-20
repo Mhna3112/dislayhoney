@@ -15,8 +15,8 @@ local LOBBY_PLACE_ID = 114204398207377
 
 getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
     Enabled = true,
-    KillAllZombies = true,
-    KillDistance = 100000,
+    KillAllZombies = false,
+    KillDistance = 500,
     AttackDelay = 0.01,
     HitsPerTarget = 3,
     MaxZombiesPerTick = 0,
@@ -94,7 +94,7 @@ local function debug_log(...)
 end
 
 local function validate_config()
-    Config.KillAllZombies = Config.KillAllZombies ~= false
+    Config.KillAllZombies = Config.KillAllZombies == true
     Config.KillDistance = math.max(1, tonumber(Config.KillDistance) or 500)
     Config.AttackDelay = math.max(0.01, tonumber(Config.AttackDelay) or 0.03)
     Config.HitsPerTarget = math.clamp(math.floor(tonumber(Config.HitsPerTarget) or 1), 1, 10)

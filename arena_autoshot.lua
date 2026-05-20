@@ -17,7 +17,7 @@ getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
     Enabled = true,
     KillAllZombies = false,
     KillDistance = 500,
-    AttackDelay = 0.01,
+    AttackDelay = 0.1,
     HitsPerTarget = 3,
     MaxZombiesPerTick = 0,
     AutoBuyWeapon = true,
@@ -96,7 +96,7 @@ end
 local function validate_config()
     Config.KillAllZombies = Config.KillAllZombies == true
     Config.KillDistance = math.max(1, tonumber(Config.KillDistance) or 500)
-    Config.AttackDelay = math.max(0.01, tonumber(Config.AttackDelay) or 0.03)
+    Config.AttackDelay = math.max(0.1, tonumber(Config.AttackDelay) or 0.1)
     Config.HitsPerTarget = math.clamp(math.floor(tonumber(Config.HitsPerTarget) or 1), 1, 10)
     Config.MaxZombiesPerTick = math.max(0, math.floor(tonumber(Config.MaxZombiesPerTick) or 0))
     if Config.KillAllZombies then

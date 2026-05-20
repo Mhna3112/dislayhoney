@@ -15,10 +15,11 @@ local LOBBY_PLACE_ID = 114204398207377
 
 getgenv().ArenaAutoShotConfig = getgenv().ArenaAutoShotConfig or {
     Enabled = true,
-    KillDistance = 2500,
-    AttackDelay = 0.03,
+    KillAllZombies = true,
+    KillDistance = 100000,
+    AttackDelay = 0.01,
     HitsPerTarget = 3,
-    MaxZombiesPerTick = 80,
+    MaxZombiesPerTick = 0,
     AutoBuyWeapon = true,
     MaxWeaponPurchases = 1,
     AutoEquip = true,
@@ -93,10 +94,15 @@ local function debug_log(...)
 end
 
 local function validate_config()
+    Config.KillAllZombies = Config.KillAllZombies ~= false
     Config.KillDistance = math.max(1, tonumber(Config.KillDistance) or 500)
-    Config.AttackDelay = math.max(0.03, tonumber(Config.AttackDelay) or 0.1)
+    Config.AttackDelay = math.max(0.01, tonumber(Config.AttackDelay) or 0.03)
     Config.HitsPerTarget = math.clamp(math.floor(tonumber(Config.HitsPerTarget) or 1), 1, 10)
-    Config.MaxZombiesPerTick = math.clamp(math.floor(tonumber(Config.MaxZombiesPerTick) or 50), 1, 250)
+    Config.MaxZombiesPerTick = math.max(0, math.floor(tonumber(Config.MaxZombiesPerTick) or 0))
+    if Config.KillAllZombies then
+        Config.KillDistance = math.max(Config.KillDistance, 100000)
+        Config.MaxZombiesPerTick = 0
+    end
     Config.MaxWeaponPurchases = math.max(0, math.floor(tonumber(Config.MaxWeaponPurchases) or 1))
     Config.AutoSkillDelay = math.max(0.25, tonumber(Config.AutoSkillDelay) or 1)
     Config.AutoSkillKeys = Config.AutoSkillKeys or {}
@@ -123,6 +129,7 @@ local function apply_saved_settings(settings)
 
     local scalar_keys = {
         "Enabled",
+        "KillAllZombies",
         "KillDistance",
         "AttackDelay",
         "HitsPerTarget",
@@ -184,6 +191,7 @@ local function save_settings()
 
     local settings = {
         Enabled = Config.Enabled,
+        KillAllZombies = Config.KillAllZombies,
         KillDistance = Config.KillDistance,
         AttackDelay = Config.AttackDelay,
         HitsPerTarget = Config.HitsPerTarget,
@@ -813,7 +821,7 @@ task.spawn(function()
         local zombies = zombiesLocal:GetChildren()
         local attacked = 0
         for i = 1, #zombies do
-            if attacked >= Config.MaxZombiesPerTick then
+            if Config.MaxZombiesPerTick > 0 and attacked >= Config.MaxZombiesPerTick then
                 break
             end
 
